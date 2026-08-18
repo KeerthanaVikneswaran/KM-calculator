@@ -1,0 +1,23 @@
+{
+  "name": "bus-km-system",
+  "version": "1.0.0",
+  "description": "Bus Registration + KM Entry matching system (Portal 1 + Portal 2 + Admin Dashboard)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-validator": "^7.2.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "localtunnel": "^2.0.2",
+    "nodemon": "^3.1.4"
+  }
+}

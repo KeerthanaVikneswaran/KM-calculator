@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Portal 2 - KM Entry</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-success mb-4">
+    <div class="container">
+        <span class="navbar-brand mb-0 h1">Portal 2 &mdash; KM Entry</span>
+        <div>
+            <span class="text-white small me-3" id="whoami"></span>
+            <button class="btn btn-outline-light btn-sm" id="logoutBtn">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Enter Travelled KM</h5>
+                    <form id="kmForm">
+                        <div class="mb-3">
+                            <label class="form-label">Employee (search ID / IC / Name)</label>
+                            <input type="text" class="form-control" id="employeeSearch" list="employeeList" placeholder="Type Employee ID, IC or Name" required>
+                            <datalist id="employeeList"></datalist>
+                        </div>
+
+                        <div class="row">
+                            <div class="col">
+                                <label class="form-label">Employee Name</label>
+                                <input type="text" class="form-control" id="employeeName" readonly>
+                            </div>
+                            <div class="col">
+                                <label class="form-label">Bus Number</label>
+                                <input type="text" class="form-control" id="busNumber" readonly placeholder="Auto-filled once matched">
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-control" id="travelDate" required>
+                            </div>
+                            <div class="col">
+                                <label class="form-label">KM</label>
+                                <input type="number" step="0.1" min="0" class="form-control" id="km" required>
+                            </div>
+                        </div>
+
+                        <div id="msgBox" class="alert d-none py-2 mt-3"></div>
+
+                        <button type="submit" class="btn btn-success w-100 mt-3">Save</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Today's KM Records</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr><th>Employee</th><th>Bus</th><th>KM</th><th>Status</th></tr>
+                            </thead>
+                            <tbody id="entriesBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/shared/api.js"></script>
+<script>
+const user = Auth.requireRole('admin', 'portal2');
+document.getElementById('whoami').textContent = `${user.username} (${user.role})`;
+document.getElementById('logoutBtn').addEventListener('click', Auth.logout);
+
+let employees = [];
+let selectedEmployeeId = null;
+const dateInput = document.getElementById('travelDate');
+dateInput.value = todayISO();
+
+async function loadEmployees() {
+    employees = await apiFetch('/api/employees');
+    const list = document.getElementById('employeeList');
+    list.innerHTML = '';
+    employees.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = `${e.EmployeeID} - ${e.EmployeeName}`;
+        list.appendChild(opt);
+    });
+}
+
+async function lookupBusForEmployee(employeeId, date) {
+    document.getElementById('busNumber').value = '';
+    try {
+        const rows = await apiFetch(`/api/transactions?employeeId=${employeeId}&date=${date}`);
+        if (rows[0] && rows[0].BusNumber) {
+            document.getElementById('busNumber').value = rows[0].BusNumber;
+        } else {
+            document.getElementById('busNumber').value = 'Not assigned yet';
+        }
+    } catch (err) {
+        // ignore lookup errors, save will still validate
+    }
+}
+
+document.getElementById('employeeSearch').addEventListener('input', (e) => {
+    const typed = e.target.value.trim();
+    const id = typed.split(' - ')[0].trim();
+    const match = employees.find(emp => emp.EmployeeID.toLowerCase() === id.toLowerCase()
+        || emp.ICNumber === typed);
+    if (match) {
+        selectedEmployeeId = match.EmployeeID;
+        document.getElementById('employeeName').value = match.EmployeeName;
+        lookupBusForEmployee(match.EmployeeID, dateInput.value);
+    } else {
+        selectedEmployeeId = null;
+        document.getElementById('employeeName').value = '';
+        document.getElementById('busNumber').value = '';
+    }
+});
+
+dateInput.addEventListener('change', () => {
+    if (selectedEmployeeId) lookupBusForEmployee(selectedEmployeeId, dateInput.value);
+    loadTodayEntries();
+});
+
+async function loadTodayEntries() {
+    const rows = await apiFetch(`/api/transactions?date=${dateInput.value}`);
+    const body = document.getElementById('entriesBody');
+    body.innerHTML = rows.map(r => `
+        <tr>
+            <td>${r.EmployeeID} - ${r.EmployeeName}</td>
+            <td>${r.BusNumber || '--'}</td>
+            <td>${r.KM ?? '--'}</td>
+            <td>${statusBadge(r.Status)}</td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" class="text-muted text-center">No entries yet</td></tr>';
+}
+
+document.getElementById('kmForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msgBox = document.getElementById('msgBox');
+    msgBox.classList.add('d-none');
+
+    if (!selectedEmployeeId) {
+        msgBox.className = 'alert alert-danger py-2';
+        msgBox.textContent = 'Please select a valid employee from the list';
+        msgBox.classList.remove('d-none');
+        return;
+    }
+
+    try {
+        const data = await apiFetch('/api/km-entry', {
+            method: 'POST',
+            body: JSON.stringify({
+                employeeId: selectedEmployeeId,
+                travelDate: dateInput.value,
+                km: document.getElementById('km').value
+            })
+        });
+
+        const status = data.transaction.Status;
+        msgBox.className = status === 'Completed' ? 'alert alert-success py-2' : 'alert alert-warning py-2';
+        msgBox.textContent = status === 'Completed'
+            ? `Saved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber}, ${data.transaction.KM} KM (Completed)`
+            : `Saved KM, but no bus registered yet for this employee/date (Status: ${status})`;
+        msgBox.classList.remove('d-none');
+
+        document.getElementById('employeeSearch').value = '';
+        document.getElementById('employeeName').value = '';
+        document.getElementById('busNumber').value = '';
+        document.getElementById('km').value = '';
+        selectedEmployeeId = null;
+
+        loadTodayEntries();
+    } catch (err) {
+        msgBox.className = 'alert alert-danger py-2';
+        msgBox.textContent = err.message;
+        msgBox.classList.remove('d-none');
+    }
+});
+
+loadEmployees();
+loadTodayEntries();
+</script>
+</body>
+</html>
