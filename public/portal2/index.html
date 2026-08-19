@@ -27,7 +27,6 @@
                     <select class="form-select" id="busSelect" required>
                         <option value="">Select Bus</option>
                     </select>
-                    <div id="fixedBusBadge" class="form-control bg-light fw-bold d-none"></div>
                 </div>
             </div>
 
@@ -72,15 +71,6 @@ async function loadBuses() {
         opt.textContent = b.BusNumber;
         busSelect.appendChild(opt);
     });
-
-    if (user.busId) {
-        busSelect.value = user.busId;
-        busSelect.classList.add('d-none');
-        const badge = document.getElementById('fixedBusBadge');
-        badge.textContent = user.busNumber || 'Assigned bus';
-        badge.classList.remove('d-none');
-        loadEmployeesForBus();
-    }
 }
 
 let msgTimer = null;
