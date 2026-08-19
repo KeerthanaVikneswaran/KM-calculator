@@ -266,23 +266,33 @@ document.getElementById('uploadExcelBtn').addEventListener('click', async () => 
         return;
     }
 
-    let added = 0, skipped = 0, failed = 0;
-    for (const employeeId of ids) {
+    const addedIds = [], skippedIds = [], failedIds = [];
+    msg.className = 'alert alert-info py-2 mt-2 mb-0';
+    msg.classList.remove('d-none');
+
+    for (let i = 0; i < ids.length; i++) {
+        const employeeId = ids[i];
+        msg.textContent = `Uploading ${i + 1} of ${ids.length}...`;
         try {
             await apiFetch('/api/employees', {
                 method: 'POST',
                 body: JSON.stringify({ employeeId, employeeName: employeeId })
             });
-            added++;
+            addedIds.push(employeeId);
         } catch (err) {
-            if (/already exists/i.test(err.message)) skipped++;
-            else failed++;
+            if (/already exists/i.test(err.message)) skippedIds.push(employeeId);
+            else failedIds.push(employeeId);
         }
     }
 
-    msg.className = failed ? 'alert alert-warning py-2 mt-2 mb-0' : 'alert alert-success py-2 mt-2 mb-0';
-    msg.textContent = `Added: ${added}, already existed: ${skipped}, failed: ${failed}`;
-    msg.classList.remove('d-none');
+    const esc = (s) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    msg.className = failedIds.length ? 'alert alert-warning py-2 mt-2 mb-0' : 'alert alert-success py-2 mt-2 mb-0';
+    msg.innerHTML = `
+        Added: ${addedIds.length}, already existed: ${skippedIds.length}, failed: ${failedIds.length}
+        ${skippedIds.length ? `<br><small>Already existed: ${esc(skippedIds.join(', '))}</small>` : ''}
+        ${failedIds.length ? `<br><small>Failed: ${esc(failedIds.join(', '))}</small>` : ''}
+    `;
     fileInput.value = '';
 });
 
