@@ -5,13 +5,25 @@
 <title>Portal 1 - Bus Employee Registration</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    body { overflow-x: hidden; }
+    .navbar-brand { font-size: 1.1rem; }
+    @media (max-width: 480px) {
+        .navbar-brand { font-size: .95rem; }
+        .scan-group { flex-wrap: wrap; }
+        .scan-group > .form-control { flex: 1 1 100%; border-radius: .375rem .375rem 0 0 !important; }
+        .scan-group > .btn { flex: 1 1 auto; border-radius: 0 !important; }
+        .scan-group > .btn:last-child { border-radius: 0 0 .375rem .375rem !important; }
+    }
+    table.gov-table-min, table { min-width: 320px; }
+</style>
 </head>
 <body class="bg-light">
 
 <nav class="navbar navbar-dark bg-primary mb-4">
-    <div class="container">
-        <span class="navbar-brand mb-0 h1">Portal 1 &mdash; Bus Employee Registration</span>
-        <div>
+    <div class="container flex-wrap gap-2">
+        <span class="navbar-brand mb-0">Portal 1 &mdash; Bus Employee Registration</span>
+        <div class="d-flex align-items-center">
             <span class="text-white small me-3" id="whoami"></span>
             <button class="btn btn-outline-light btn-sm" id="logoutBtn">Logout</button>
         </div>
@@ -33,7 +45,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">Employee ID</label>
-                        <div class="input-group">
+                        <div class="input-group scan-group">
                             <input type="text" class="form-control" id="employeeSearch" list="employeeList" placeholder="Scan or type Employee ID, then Enter" autocomplete="off">
                             <button type="button" class="btn btn-primary" id="addBtn">Add</button>
                             <button type="button" class="btn btn-outline-primary" id="qrScanBtn">Scan QR</button>

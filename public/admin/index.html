@@ -20,6 +20,7 @@
         background: #f4f6f9;
         font-family: 'Inter', system-ui, sans-serif;
         color: #1e2937;
+        overflow-x: hidden;
     }
     .gov-header {
         background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
@@ -90,16 +91,25 @@
 
     .footer-note { color: var(--muted); font-size: .78rem; text-align: center; margin-top: 24px; }
 
-    .gov-tabs { border-bottom: 1px solid var(--border); }
+    .gov-tabs {
+        border-bottom: 1px solid var(--border);
+        flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
     .gov-tabs .nav-link {
         color: var(--muted); font-weight: 600; font-size: .9rem;
         border: none; border-bottom: 3px solid transparent; border-radius: 0;
-        padding: 10px 4px; margin-right: 24px;
+        padding: 10px 4px; margin-right: 20px; white-space: nowrap;
     }
     .gov-tabs .nav-link.active {
         color: var(--navy); border-bottom-color: var(--accent); background: none;
     }
     .gov-tabs .nav-link:hover { border-bottom-color: var(--border); color: var(--navy); }
+
+    @media (max-width: 480px) {
+        .brand-title { font-size: .92rem; }
+        .kpi-value { font-size: 1.4rem; }
+        .panel-body { padding: 14px; }
+    }
 </style>
 </head>
 <body>
