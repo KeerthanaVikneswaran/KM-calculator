@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bus KM System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="icon" href="images/favicon.ico">
+<style>
+    body { background: #f1f4f8; }
+    .login-wrap { height: 100vh; display: flex; align-items: center; }
+    .login-card { max-width: 380px; width: 100%; margin: auto; }
+    .d-none { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="storageWarning" class="alert alert-warning text-center rounded-0 mb-0 d-none py-2">
+    This browser is blocking site storage, so login/data can't be saved here.
+    Please open this page directly in <strong>Chrome</strong> or <strong>Safari</strong>
+    (not inside WhatsApp / Instagram / another app's built-in browser) and try again.
+</div>
+
+<!-- ================= LOGIN VIEW ================= -->
+<section id="view-login">
+    <div class="login-wrap">
+        <div class="login-card">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h4 class="text-center mb-1">Bus KM System</h4>
+                    <p class="text-center text-muted small mb-4">Sign in to continue</p>
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" id="loginUsername" required autofocus>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <div id="loginError" class="alert alert-danger py-2 d-none"></div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= PORTAL 1 VIEW ================= -->
+<section id="view-portal1" class="d-none">
+    <nav class="navbar navbar-dark bg-primary mb-4">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">Portal 1 &mdash; Bus Employee Registration</span>
+            <div>
+                <span class="text-white small me-3" id="p1-whoami"></span>
+                <button class="btn btn-outline-light btn-sm me-2 d-none" id="p1-adminNav">Dashboard</button>
+                <button class="btn btn-outline-light btn-sm" id="p1-logoutBtn">Logout</button>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Register Employee to Bus</h5>
+                        <form id="p1-entryForm">
+                            <div class="mb-3">
+                                <label class="form-label">Bus Number</label>
+                                <select class="form-select" id="p1-busSelect" required>
+                                    <option value="">Select Bus</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Employee (search ID / IC / Name)</label>
+                                <input type="text" class="form-control" id="p1-employeeSearch" list="p1-employeeList" placeholder="Type Employee ID, IC or Name" required>
+                                <datalist id="p1-employeeList"></datalist>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <label class="form-label">Employee Name</label>
+                                    <input type="text" class="form-control" id="p1-employeeName" readonly>
+                                </div>
+                                <div class="col">
+                                    <label class="form-label">IC Number</label>
+                                    <input type="text" class="form-control" id="p1-icNumber" readonly>
+                                </div>
+                            </div>
+                            <div class="mb-3 mt-3">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-control" id="p1-travelDate" required>
+                            </div>
+                            <div id="p1-msgBox" class="alert d-none py-2"></div>
+                            <button type="submit" class="btn btn-primary w-100">Save</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title">Today's Entries</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead><tr><th>Employee</th><th>Bus</th><th>KM</th><th>Status</th></tr></thead>
+                                <tbody id="p1-entriesBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= PORTAL 2 VIEW ================= -->
+<section id="view-portal2" class="d-none">
+    <nav class="navbar navbar-dark bg-success mb-4">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">Portal 2 &mdash; KM Entry</span>
+            <div>
+                <span class="text-white small me-3" id="p2-whoami"></span>
+                <button class="btn btn-outline-light btn-sm me-2 d-none" id="p2-adminNav">Dashboard</button>
+                <button class="btn btn-outline-light btn-sm" id="p2-logoutBtn">Logout</button>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Enter Travelled KM</h5>
+                        <form id="p2-kmForm">
+                            <div class="mb-3">
+                                <label class="form-label">Employee (search ID / IC / Name)</label>
+                                <input type="text" class="form-control" id="p2-employeeSearch" list="p2-employeeList" placeholder="Type Employee ID, IC or Name" required>
+                                <datalist id="p2-employeeList"></datalist>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <label class="form-label">Employee Name</label>
+                                    <input type="text" class="form-control" id="p2-employeeName" readonly>
+                                </div>
+                                <div class="col">
+                                    <label class="form-label">Bus Number</label>
+                                    <input type="text" class="form-control" id="p2-busNumber" readonly placeholder="Auto-filled once matched">
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col">
+                                    <label class="form-label">Date</label>
+                                    <input type="date" class="form-control" id="p2-travelDate" required>
+                                </div>
+                                <div class="col">
+                                    <label class="form-label">KM</label>
+                                    <input type="number" step="0.1" min="0" class="form-control" id="p2-km" required>
+                                </div>
+                            </div>
+                            <div id="p2-msgBox" class="alert d-none py-2 mt-3"></div>
+                            <button type="submit" class="btn btn-success w-100 mt-3">Save</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title">Today's KM Records</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead><tr><th>Employee</th><th>Bus</th><th>KM</th><th>Status</th></tr></thead>
+                                <tbody id="p2-entriesBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= ADMIN VIEW ================= -->
+<section id="view-admin" class="d-none">
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand mb-0 h1">Transport Admin Dashboard</span>
+            <div>
+                <span class="text-white small me-3" id="ad-whoami"></span>
+                <button class="btn btn-outline-light btn-sm me-2 d-none" id="ad-portal1Nav">Portal 1</button>
+                <button class="btn btn-outline-light btn-sm me-2 d-none" id="ad-portal2Nav">Portal 2</button>
+                <button class="btn btn-outline-light btn-sm" id="ad-logoutBtn">Logout</button>
+            </div>
+        </div>
+    </nav>
+    <div class="container-fluid px-4">
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md">
+                <div class="card text-center shadow-sm"><div class="card-body">
+                    <div class="text-muted small">Employees</div>
+                    <div class="fs-3 fw-bold" id="ad-cardEmployees">--</div>
+                </div></div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="card text-center shadow-sm"><div class="card-body">
+                    <div class="text-muted small">Buses Used</div>
+                    <div class="fs-3 fw-bold" id="ad-cardBuses">--</div>
+                </div></div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="card text-center shadow-sm"><div class="card-body">
+                    <div class="text-muted small">Completed</div>
+                    <div class="fs-3 fw-bold text-success" id="ad-cardCompleted">--</div>
+                </div></div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="card text-center shadow-sm"><div class="card-body">
+                    <div class="text-muted small">Pending</div>
+                    <div class="fs-3 fw-bold text-warning" id="ad-cardPending">--</div>
+                </div></div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="card text-center shadow-sm"><div class="card-body">
+                    <div class="text-muted small">Total KM</div>
+                    <div class="fs-3 fw-bold text-primary" id="ad-cardKM">--</div>
+                </div></div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label small">Date</label>
+                        <input type="date" class="form-control form-control-sm" id="ad-filterDate">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Bus</label>
+                        <select class="form-select form-select-sm" id="ad-filterBus"><option value="">All Buses</option></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Employee ID</label>
+                        <input type="text" class="form-control form-control-sm" id="ad-filterEmployee" placeholder="e.g. EMP001">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Status</label>
+                        <select class="form-select form-select-sm" id="ad-filterStatus">
+                            <option value="">All</option>
+                            <option value="Completed">Completed</option>
+                            <option value="KM Pending">KM Pending</option>
+                            <option value="Bus Pending">Bus Pending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button class="btn btn-primary btn-sm w-100" id="ad-searchBtn">Search</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">Transactions</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead><tr><th>Employee ID</th><th>Name</th><th>Bus</th><th>Date</th><th>KM</th><th>Status</th></tr></thead>
+                        <tbody id="ad-resultsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+/* =========================================================================
+   Local data layer (replaces the Node/Express + SQLite backend).
+   Everything lives in this browser's localStorage, so it works on static
+   hosting (Google Drive, GitHub Pages, etc.) with no server needed.
+
+   LIMITATION: data is per-browser. Portal 1 entries made on one device
+   will NOT be visible to Portal 2 / Admin on a different device or browser,
+   because there is no shared server/database anymore.
+   ========================================================================= */
+const K = { USERS: 'bkm_users', EMP: 'bkm_employees', BUS: 'bkm_buses', TXN: 'bkm_transactions', SEEDED: 'bkm_seeded_v1', SESSION: 'bkm_session' };
+
+/* Some in-app browsers (WhatsApp/Instagram/etc.) or strict privacy modes
+   block localStorage entirely and throw instead of just returning null.
+   Fall back to an in-memory store so the page doesn't crash, and warn
+   the user that nothing will actually be saved between visits. */
+let storageBlocked = false;
+const memoryStore = {};
+function safeGet(key) {
+    try { return localStorage.getItem(key); }
+    catch (err) { storageBlocked = true; return Object.prototype.hasOwnProperty.call(memoryStore, key) ? memoryStore[key] : null; }
+}
+function safeSet(key, val) {
+    try { localStorage.setItem(key, val); }
+    catch (err) { storageBlocked = true; memoryStore[key] = val; }
+}
+function safeRemove(key) {
+    try { localStorage.removeItem(key); }
+    catch (err) { storageBlocked = true; delete memoryStore[key]; }
+}
+
+function loadJSON(key, fallback) { const raw = safeGet(key); return raw ? JSON.parse(raw) : fallback; }
+function saveJSON(key, val) { safeSet(key, JSON.stringify(val)); }
+
+function seedIfNeeded() {
+    if (safeGet(K.SEEDED)) return;
+    saveJSON(K.USERS, [
+        { username: 'admin', password: 'Admin@123', role: 'admin' },
+        { username: 'portal1', password: 'Portal1@123', role: 'portal1' },
+        { username: 'portal2', password: 'Portal2@123', role: 'portal2' }
+    ]);
+    saveJSON(K.EMP, [
+        { EmployeeID: 'EMP001', ICNumber: '901234567V', EmployeeName: 'Kumar', Department: 'Operations', Status: 'Active' },
+        { EmployeeID: 'EMP002', ICNumber: '921234567V', EmployeeName: 'Siva', Department: 'Logistics', Status: 'Active' },
+        { EmployeeID: 'EMP003', ICNumber: '930987654V', EmployeeName: 'Nimal', Department: 'Operations', Status: 'Active' }
+    ]);
+    saveJSON(K.BUS, [
+        { BusID: 1, BusNumber: 'BUS-001', BusName: 'Route A', Status: 'Active' },
+        { BusID: 2, BusNumber: 'BUS-002', BusName: 'Route B', Status: 'Active' }
+    ]);
+    saveJSON(K.TXN, []);
+    safeSet(K.SEEDED, '1');
+}
+
+function toDateOnly(d) { return new Date(d).toISOString().slice(0, 10); }
+function todayISO() { return toDateOnly(new Date()); }
+function nextId(rows, field) { return rows.length ? Math.max(...rows.map(r => r[field])) + 1 : 1; }
+
+function statusBadge(status) {
+    const map = { 'Completed': 'bg-success', 'KM Pending': 'bg-warning text-dark', 'Bus Pending': 'bg-info text-dark' };
+    return `<span class="badge ${map[status] || 'bg-secondary'}">${status}</span>`;
+}
+
+const Auth = {
+    login(username, password) {
+        const user = loadJSON(K.USERS, []).find(u => u.username === username && u.password === password);
+        if (!user) throw new Error('Invalid username or password');
+        const session = { username: user.username, role: user.role };
+        saveJSON(K.SESSION, session);
+        return session;
+    },
+    getUser() { return loadJSON(K.SESSION, null); },
+    logout() { safeRemove(K.SESSION); showView('login'); }
+};
+
+function listBuses() {
+    return loadJSON(K.BUS, []).filter(b => b.Status === 'Active').sort((a, b) => a.BusNumber.localeCompare(b.BusNumber));
+}
+
+function listEmployees(search) {
+    let emps = loadJSON(K.EMP, []);
+    if (search) {
+        const s = search.toLowerCase();
+        emps = emps.filter(e => e.EmployeeID.toLowerCase().includes(s) || (e.ICNumber || '').toLowerCase().includes(s) || e.EmployeeName.toLowerCase().includes(s));
+    }
+    return emps.slice().sort((a, b) => a.EmployeeName.localeCompare(b.EmployeeName));
+}
+
+function createBusEntry({ employeeId, busId, travelDate }) {
+    const employee = loadJSON(K.EMP, []).find(e => e.EmployeeID === employeeId);
+    if (!employee) throw new Error('Employee not found');
+    const bus = loadJSON(K.BUS, []).find(b => String(b.BusID) === String(busId));
+    if (!bus) throw new Error('Bus not found');
+
+    const date = toDateOnly(travelDate);
+    const txns = loadJSON(K.TXN, []);
+    let row = txns.find(t => t.EmployeeID === employeeId && t.TravelDate === date);
+    const now = new Date().toISOString();
+    if (row) {
+        row.BusID = bus.BusID;
+        row.Status = (row.KM !== null && row.KM !== undefined) ? 'Completed' : 'KM Pending';
+        row.UpdatedDate = now;
+    } else {
+        row = { ID: nextId(txns, 'ID'), EmployeeID: employeeId, BusID: bus.BusID, TravelDate: date, KM: null, Status: 'KM Pending', CreatedDate: now, UpdatedDate: now };
+        txns.push(row);
+    }
+    saveJSON(K.TXN, txns);
+    return { ...row, EmployeeName: employee.EmployeeName, BusNumber: bus.BusNumber };
+}
+
+function createKmEntry({ employeeId, travelDate, km }) {
+    const employee = loadJSON(K.EMP, []).find(e => e.EmployeeID === employeeId);
+    if (!employee) throw new Error('Employee not found');
+    if (km === undefined || km === null || km === '' || isNaN(km) || Number(km) < 0) {
+        throw new Error('km must be a positive number');
+    }
+    const date = toDateOnly(travelDate);
+    const kmValue = Number(km);
+    const txns = loadJSON(K.TXN, []);
+    let row = txns.find(t => t.EmployeeID === employeeId && t.TravelDate === date);
+    const now = new Date().toISOString();
+    if (row) {
+        row.KM = kmValue;
+        row.Status = (row.BusID !== null && row.BusID !== undefined) ? 'Completed' : 'Bus Pending';
+        row.UpdatedDate = now;
+    } else {
+        row = { ID: nextId(txns, 'ID'), EmployeeID: employeeId, BusID: null, TravelDate: date, KM: kmValue, Status: 'Bus Pending', CreatedDate: now, UpdatedDate: now };
+        txns.push(row);
+    }
+    saveJSON(K.TXN, txns);
+    const bus = row.BusID ? loadJSON(K.BUS, []).find(b => b.BusID === row.BusID) : null;
+    return { ...row, EmployeeName: employee.EmployeeName, BusNumber: bus ? bus.BusNumber : null };
+}
+
+function listTransactions({ date, busId, employeeId, status } = {}) {
+    let txns = loadJSON(K.TXN, []);
+    const employees = loadJSON(K.EMP, []);
+    const buses = loadJSON(K.BUS, []);
+
+    if (date) { const d = toDateOnly(date); txns = txns.filter(t => t.TravelDate === d); }
+    if (busId) txns = txns.filter(t => String(t.BusID) === String(busId));
+    if (employeeId) txns = txns.filter(t => t.EmployeeID === employeeId);
+    if (status) txns = txns.filter(t => t.Status === status);
+
+    txns = txns.slice().sort((a, b) => b.TravelDate.localeCompare(a.TravelDate) || b.UpdatedDate.localeCompare(a.UpdatedDate));
+
+    return txns.map(t => {
+        const emp = employees.find(e => e.EmployeeID === t.EmployeeID);
+        const bus = t.BusID ? buses.find(b => b.BusID === t.BusID) : null;
+        return { ...t, EmployeeName: emp ? emp.EmployeeName : '', ICNumber: emp ? emp.ICNumber : '', BusNumber: bus ? bus.BusNumber : null };
+    });
+}
+
+function getDashboard(date) {
+    const d = date ? toDateOnly(date) : todayISO();
+    const txns = loadJSON(K.TXN, []).filter(t => t.TravelDate === d);
+    const completed = txns.filter(t => t.Status === 'Completed').length;
+    return {
+        date: d,
+        TotalEmployees: txns.length,
+        TotalBuses: new Set(txns.filter(t => t.BusID).map(t => t.BusID)).size,
+        Completed: completed,
+        Pending: txns.length - completed,
+        TotalKM: txns.reduce((s, t) => s + (t.KM || 0), 0)
+    };
+}
+
+/* ------------------------- View router ------------------------- */
+function showView(name) {
+    ['login', 'portal1', 'portal2', 'admin'].forEach(v => {
+        document.getElementById('view-' + v).classList.toggle('d-none', v !== name);
+    });
+    if (name === 'portal1') initPortal1();
+    if (name === 'portal2') initPortal2();
+    if (name === 'admin') initAdmin();
+}
+
+function afterLogin(user) {
+    if (user.role === 'admin') showView('admin');
+    else if (user.role === 'portal1') showView('portal1');
+    else if (user.role === 'portal2') showView('portal2');
+}
+
+/* ------------------------- Login ------------------------- */
+document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const errorBox = document.getElementById('loginError');
+    errorBox.classList.add('d-none');
+    try {
+        const user = Auth.login(
+            document.getElementById('loginUsername').value.trim(),
+            document.getElementById('loginPassword').value
+        );
+        afterLogin(user);
+    } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.classList.remove('d-none');
+    }
+});
+
+/* ------------------------- Portal 1 ------------------------- */
+let p1Employees = [], p1Selected = null, p1Initialized = false;
+function initPortal1() {
+    const user = Auth.getUser();
+    document.getElementById('p1-whoami').textContent = `${user.username} (${user.role})`;
+    document.getElementById('p1-adminNav').classList.toggle('d-none', user.role !== 'admin');
+    document.getElementById('p1-travelDate').value = todayISO();
+    p1RefreshBuses();
+    p1RefreshEmployees();
+    p1RefreshEntries();
+    if (p1Initialized) return;
+    p1Initialized = true;
+
+    document.getElementById('p1-logoutBtn').addEventListener('click', Auth.logout);
+    document.getElementById('p1-adminNav').addEventListener('click', () => showView('admin'));
+
+    document.getElementById('p1-employeeSearch').addEventListener('input', (e) => {
+        const typed = e.target.value.trim();
+        const id = typed.split(' - ')[0].trim();
+        const match = p1Employees.find(emp => emp.EmployeeID.toLowerCase() === id.toLowerCase() || emp.ICNumber === typed);
+        if (match) {
+            p1Selected = match.EmployeeID;
+            document.getElementById('p1-employeeName').value = match.EmployeeName;
+            document.getElementById('p1-icNumber').value = match.ICNumber || '';
+        } else {
+            p1Selected = null;
+            document.getElementById('p1-employeeName').value = '';
+            document.getElementById('p1-icNumber').value = '';
+        }
+    });
+
+    document.getElementById('p1-travelDate').addEventListener('change', p1RefreshEntries);
+
+    document.getElementById('p1-entryForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const msgBox = document.getElementById('p1-msgBox');
+        msgBox.classList.add('d-none');
+        if (!p1Selected) {
+            msgBox.className = 'alert alert-danger py-2';
+            msgBox.textContent = 'Please select a valid employee from the list';
+            msgBox.classList.remove('d-none');
+            return;
+        }
+        try {
+            const txn = createBusEntry({
+                employeeId: p1Selected,
+                busId: document.getElementById('p1-busSelect').value,
+                travelDate: document.getElementById('p1-travelDate').value
+            });
+            msgBox.className = 'alert alert-success py-2';
+            msgBox.textContent = `Saved: ${txn.EmployeeID} -> ${txn.BusNumber} (${txn.Status})`;
+            msgBox.classList.remove('d-none');
+            document.getElementById('p1-employeeSearch').value = '';
+            document.getElementById('p1-employeeName').value = '';
+            document.getElementById('p1-icNumber').value = '';
+            p1Selected = null;
+            p1RefreshEntries();
+        } catch (err) {
+            msgBox.className = 'alert alert-danger py-2';
+            msgBox.textContent = err.message;
+            msgBox.classList.remove('d-none');
+        }
+    });
+}
+function p1RefreshBuses() {
+    const select = document.getElementById('p1-busSelect');
+    select.innerHTML = '<option value="">Select Bus</option>';
+    listBuses().forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.BusID;
+        opt.textContent = b.BusNumber + (b.BusName ? ` - ${b.BusName}` : '');
+        select.appendChild(opt);
+    });
+}
+function p1RefreshEmployees() {
+    p1Employees = listEmployees();
+    const list = document.getElementById('p1-employeeList');
+    list.innerHTML = '';
+    p1Employees.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = `${e.EmployeeID} - ${e.EmployeeName}`;
+        list.appendChild(opt);
+    });
+}
+function p1RefreshEntries() {
+    const rows = listTransactions({ date: document.getElementById('p1-travelDate').value });
+    document.getElementById('p1-entriesBody').innerHTML = rows.map(r => `
+        <tr><td>${r.EmployeeID} - ${r.EmployeeName}</td><td>${r.BusNumber || '--'}</td><td>${r.KM ?? '--'}</td><td>${statusBadge(r.Status)}</td></tr>
+    `).join('') || '<tr><td colspan="4" class="text-muted text-center">No entries yet</td></tr>';
+}
+
+/* ------------------------- Portal 2 ------------------------- */
+let p2Employees = [], p2Selected = null, p2Initialized = false;
+function initPortal2() {
+    const user = Auth.getUser();
+    document.getElementById('p2-whoami').textContent = `${user.username} (${user.role})`;
+    document.getElementById('p2-adminNav').classList.toggle('d-none', user.role !== 'admin');
+    document.getElementById('p2-travelDate').value = todayISO();
+    p2RefreshEmployees();
+    p2RefreshEntries();
+    if (p2Initialized) return;
+    p2Initialized = true;
+
+    document.getElementById('p2-logoutBtn').addEventListener('click', Auth.logout);
+    document.getElementById('p2-adminNav').addEventListener('click', () => showView('admin'));
+
+    document.getElementById('p2-employeeSearch').addEventListener('input', (e) => {
+        const typed = e.target.value.trim();
+        const id = typed.split(' - ')[0].trim();
+        const match = p2Employees.find(emp => emp.EmployeeID.toLowerCase() === id.toLowerCase() || emp.ICNumber === typed);
+        if (match) {
+            p2Selected = match.EmployeeID;
+            document.getElementById('p2-employeeName').value = match.EmployeeName;
+            p2LookupBus(match.EmployeeID, document.getElementById('p2-travelDate').value);
+        } else {
+            p2Selected = null;
+            document.getElementById('p2-employeeName').value = '';
+            document.getElementById('p2-busNumber').value = '';
+        }
+    });
+
+    document.getElementById('p2-travelDate').addEventListener('change', () => {
+        if (p2Selected) p2LookupBus(p2Selected, document.getElementById('p2-travelDate').value);
+        p2RefreshEntries();
+    });
+
+    document.getElementById('p2-kmForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const msgBox = document.getElementById('p2-msgBox');
+        msgBox.classList.add('d-none');
+        if (!p2Selected) {
+            msgBox.className = 'alert alert-danger py-2';
+            msgBox.textContent = 'Please select a valid employee from the list';
+            msgBox.classList.remove('d-none');
+            return;
+        }
+        try {
+            const txn = createKmEntry({
+                employeeId: p2Selected,
+                travelDate: document.getElementById('p2-travelDate').value,
+                km: document.getElementById('p2-km').value
+            });
+            const status = txn.Status;
+            msgBox.className = status === 'Completed' ? 'alert alert-success py-2' : 'alert alert-warning py-2';
+            msgBox.textContent = status === 'Completed'
+                ? `Saved: ${txn.EmployeeID} -> ${txn.BusNumber}, ${txn.KM} KM (Completed)`
+                : `Saved KM, but no bus registered yet for this employee/date (Status: ${status})`;
+            msgBox.classList.remove('d-none');
+            document.getElementById('p2-employeeSearch').value = '';
+            document.getElementById('p2-employeeName').value = '';
+            document.getElementById('p2-busNumber').value = '';
+            document.getElementById('p2-km').value = '';
+            p2Selected = null;
+            p2RefreshEntries();
+        } catch (err) {
+            msgBox.className = 'alert alert-danger py-2';
+            msgBox.textContent = err.message;
+            msgBox.classList.remove('d-none');
+        }
+    });
+}
+function p2RefreshEmployees() {
+    p2Employees = listEmployees();
+    const list = document.getElementById('p2-employeeList');
+    list.innerHTML = '';
+    p2Employees.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = `${e.EmployeeID} - ${e.EmployeeName}`;
+        list.appendChild(opt);
+    });
+}
+function p2LookupBus(employeeId, date) {
+    const rows = listTransactions({ employeeId, date });
+    document.getElementById('p2-busNumber').value = (rows[0] && rows[0].BusNumber) ? rows[0].BusNumber : 'Not assigned yet';
+}
+function p2RefreshEntries() {
+    const rows = listTransactions({ date: document.getElementById('p2-travelDate').value });
+    document.getElementById('p2-entriesBody').innerHTML = rows.map(r => `
+        <tr><td>${r.EmployeeID} - ${r.EmployeeName}</td><td>${r.BusNumber || '--'}</td><td>${r.KM ?? '--'}</td><td>${statusBadge(r.Status)}</td></tr>
+    `).join('') || '<tr><td colspan="4" class="text-muted text-center">No entries yet</td></tr>';
+}
+
+/* ------------------------- Admin ------------------------- */
+let adInitialized = false;
+function initAdmin() {
+    const user = Auth.getUser();
+    document.getElementById('ad-whoami').textContent = `${user.username} (${user.role})`;
+    document.getElementById('ad-filterDate').value = document.getElementById('ad-filterDate').value || todayISO();
+    adRefreshBusFilter();
+    adRefreshSummary();
+    adRefreshResults();
+    if (adInitialized) return;
+    adInitialized = true;
+
+    document.getElementById('ad-logoutBtn').addEventListener('click', Auth.logout);
+    document.getElementById('ad-portal1Nav').addEventListener('click', () => showView('portal1'));
+    document.getElementById('ad-portal2Nav').addEventListener('click', () => showView('portal2'));
+    document.getElementById('ad-searchBtn').addEventListener('click', () => { adRefreshSummary(); adRefreshResults(); });
+}
+function adRefreshBusFilter() {
+    const select = document.getElementById('ad-filterBus');
+    select.innerHTML = '<option value="">All Buses</option>';
+    listBuses().forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.BusID;
+        opt.textContent = b.BusNumber;
+        select.appendChild(opt);
+    });
+}
+function adRefreshSummary() {
+    const data = getDashboard(document.getElementById('ad-filterDate').value);
+    document.getElementById('ad-cardEmployees').textContent = data.TotalEmployees;
+    document.getElementById('ad-cardBuses').textContent = data.TotalBuses;
+    document.getElementById('ad-cardCompleted').textContent = data.Completed;
+    document.getElementById('ad-cardPending').textContent = data.Pending;
+    document.getElementById('ad-cardKM').textContent = Number(data.TotalKM).toFixed(1);
+}
+function adRefreshResults() {
+    const rows = listTransactions({
+        date: document.getElementById('ad-filterDate').value,
+        busId: document.getElementById('ad-filterBus').value,
+        employeeId: document.getElementById('ad-filterEmployee').value.trim(),
+        status: document.getElementById('ad-filterStatus').value
+    });
+    document.getElementById('ad-resultsBody').innerHTML = rows.map(r => `
+        <tr><td>${r.EmployeeID}</td><td>${r.EmployeeName}</td><td>${r.BusNumber || '--'}</td><td>${r.TravelDate}</td><td>${r.KM ?? '--'}</td><td>${statusBadge(r.Status)}</td></tr>
+    `).join('') || '<tr><td colspan="6" class="text-muted text-center">No records found</td></tr>';
+}
+
+/* ------------------------- Boot ------------------------- */
+seedIfNeeded();
+if (storageBlocked) document.getElementById('storageWarning').classList.remove('d-none');
+const existingSession = Auth.getUser();
+if (existingSession) afterLogin(existingSession); else showView('login');
+</script>
+</body>
+</html>

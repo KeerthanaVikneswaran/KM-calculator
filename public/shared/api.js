@@ -1,20 +1,35 @@
 /* Shared helpers used by all three front-ends (login, portal1, portal2, admin) */
 
+/* Some in-app browsers (WhatsApp/Instagram/etc.) or strict privacy modes
+   block localStorage entirely and throw instead of just returning null.
+   These wrappers stop that from crashing the page with an uncaught error. */
+function safeStorageGet(key) {
+    try { return localStorage.getItem(key); } catch (err) { return null; }
+}
+function safeStorageSet(key, val) {
+    try { localStorage.setItem(key, val); return true; } catch (err) { return false; }
+}
+function safeStorageRemove(key) {
+    try { localStorage.removeItem(key); } catch (err) { /* ignore */ }
+}
+
 const Auth = {
     getToken() {
-        return localStorage.getItem('token');
+        return safeStorageGet('token');
     },
     getUser() {
-        const raw = localStorage.getItem('user');
+        const raw = safeStorageGet('user');
         return raw ? JSON.parse(raw) : null;
     },
     save(token, user) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
+        const ok = safeStorageSet('token', token) && safeStorageSet('user', JSON.stringify(user));
+        if (!ok) {
+            throw new Error('This browser is blocking site storage, so login can\'t be saved. Please open this page directly in Chrome or Safari (not inside WhatsApp/Instagram/another app\'s browser) and try again.');
+        }
     },
     logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        safeStorageRemove('token');
+        safeStorageRemove('user');
         window.location.href = '/';
     },
     requireRole(...roles) {
