@@ -9,9 +9,9 @@ one page (switches views with JavaScript), so it works on hosts that
 don't support multi-folder routing, like Google Drive.
 
 Login accounts (same as the original app):
-    admin    / Admin@123    -> Admin Dashboard
-    portal1  / Portal1@123  -> Portal 1 (register employee to bus)
-    portal2  / Portal2@123  -> Portal 2 (enter KM)
+    admin  / Admin@123  -> Admin Dashboard
+    user1  / user1@123  -> Portal 1 (register employee to bus)
+    user2  / user2@123  -> Portal 2 (enter KM)
 
 HOW TO HOST ON GOOGLE DRIVE
 ----------------------------

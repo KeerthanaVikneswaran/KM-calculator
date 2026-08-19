@@ -32,8 +32,9 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 3000;
 
 seedDefaultUsers()
-    .then((created) => {
+    .then(({ created, updated }) => {
         if (created.length) console.log('Seeded default logins:', created.join(', '));
+        if (updated.length) console.log('Updated default logins:', updated.join(', '));
     })
     .catch((err) => console.error('Auto-seed failed:', err.message))
     .finally(() => {

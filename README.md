@@ -33,8 +33,8 @@ created as `KM Pending` or `Bus Pending` and completes itself once the other sid
    This also creates `database/BusKMSystem.db` (via the schema on first run) if it doesn't
    already exist. Creates:
    - `admin` / `Admin@123` (role: admin — dashboard, reports, master data)
-   - `portal1` / `Portal1@123` (role: portal1 — bus/employee registration)
-   - `portal2` / `Portal2@123` (role: portal2 — KM entry)
+   - `user1` / `user1@123` (role: portal1 — bus/employee registration)
+   - `user2` / `user2@123` (role: portal2 — KM entry)
 
    Change these passwords before going live.
 
@@ -75,8 +75,8 @@ swap to a hosted database. Ask if you want help with either when you're ready to
 
 ## Auto-seeding
 
-On every boot, the server checks `tblUsers` and creates the three default logins
-(`admin`/`Admin@123`, `portal1`/`Portal1@123`, `portal2`/`Portal2@123`) if they don't already
+On every boot, the server checks `tblUsers` and creates/updates the three default logins
+(`admin`/`Admin@123`, `user1`/`user1@123`, `user2`/`user2@123`) if they don't already
 exist (`config/seed.js`). This is what makes a fresh Render deploy usable immediately without
 running a script by hand. `node scripts/seedAdmin.js` still works too, for local use.
 

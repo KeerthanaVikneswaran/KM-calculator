@@ -279,7 +279,7 @@
    will NOT be visible to Portal 2 / Admin on a different device or browser,
    because there is no shared server/database anymore.
    ========================================================================= */
-const K = { USERS: 'bkm_users', EMP: 'bkm_employees', BUS: 'bkm_buses', TXN: 'bkm_transactions', SEEDED: 'bkm_seeded_v1', SESSION: 'bkm_session' };
+const K = { USERS: 'bkm_users', EMP: 'bkm_employees', BUS: 'bkm_buses', TXN: 'bkm_transactions', SEEDED: 'bkm_seeded_v2', SESSION: 'bkm_session' };
 
 /* Some in-app browsers (WhatsApp/Instagram/etc.) or strict privacy modes
    block localStorage entirely and throw instead of just returning null.
@@ -307,8 +307,8 @@ function seedIfNeeded() {
     if (safeGet(K.SEEDED)) return;
     saveJSON(K.USERS, [
         { username: 'admin', password: 'Admin@123', role: 'admin' },
-        { username: 'portal1', password: 'Portal1@123', role: 'portal1' },
-        { username: 'portal2', password: 'Portal2@123', role: 'portal2' }
+        { username: 'user1', password: 'user1@123', role: 'portal1' },
+        { username: 'user2', password: 'user2@123', role: 'portal2' }
     ]);
     saveJSON(K.EMP, [
         { EmployeeID: 'EMP001', ICNumber: '901234567V', EmployeeName: 'Kumar', Department: 'Operations', Status: 'Active' },
