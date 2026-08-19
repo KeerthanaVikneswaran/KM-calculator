@@ -11,6 +11,18 @@ db.pragma('foreign_keys = ON');
 
 db.exec(fs.readFileSync(schemaPath, 'utf8'));
 
+function ensureColumn(table, column, definition) {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+    if (!cols.some(c => c.name === column)) {
+        db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    }
+}
+
+// Migrations for columns added after the initial schema (safe to re-run: no-op if already present)
+ensureColumn('tblUsers', 'BusID', 'INTEGER REFERENCES tblBuses(BusID)');
+ensureColumn('tblBusEmployee', 'ScannedBy', 'TEXT');
+ensureColumn('tblBusEmployee', 'ScannedAt', 'TEXT');
+
 console.log('Connected to SQLite database:', dbPath);
 
 module.exports = db;

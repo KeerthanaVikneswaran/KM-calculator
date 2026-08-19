@@ -11,7 +11,7 @@ async function login(req, res) {
 
     try {
         const user = db.prepare(
-            'SELECT UserID, Username, PasswordHash, Role, IsActive FROM tblUsers WHERE Username = ?'
+            'SELECT UserID, Username, PasswordHash, Role, IsActive, BusID FROM tblUsers WHERE Username = ?'
         ).get(username);
 
         if (!user || !user.IsActive) {
@@ -23,15 +23,25 @@ async function login(req, res) {
             return res.status(401).json({ message: 'Invalid username or password' });
         }
 
+        let bus = null;
+        if (user.BusID) {
+            bus = db.prepare('SELECT BusID, BusNumber FROM tblBuses WHERE BusID = ?').get(user.BusID);
+        }
+
         const token = jwt.sign(
-            { userId: user.UserID, username: user.Username, role: user.Role },
+            { userId: user.UserID, username: user.Username, role: user.Role, busId: bus ? bus.BusID : null },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
         );
 
         res.json({
             token,
-            user: { username: user.Username, role: user.Role }
+            user: {
+                username: user.Username,
+                role: user.Role,
+                busId: bus ? bus.BusID : null,
+                busNumber: bus ? bus.BusNumber : null
+            }
         });
     } catch (err) {
         console.error(err);

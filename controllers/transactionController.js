@@ -10,6 +10,7 @@ function toDateOnly(dateStr) {
    --------------------------------------------------------- */
 function createBusEntry(req, res) {
     const { employeeId, busId, travelDate } = req.body;
+    const scannedBy = req.user ? req.user.username : null;
 
     if (!employeeId || !busId || !travelDate) {
         return res.status(400).json({ message: 'employeeId, busId and travelDate are required' });
@@ -33,14 +34,14 @@ function createBusEntry(req, res) {
             if (existing) {
                 const status = existing.KM !== null ? 'Completed' : 'KM Pending';
                 db.prepare(
-                    "UPDATE tblBusEmployee SET BusID = ?, Status = ?, UpdatedDate = datetime('now') WHERE ID = ?"
-                ).run(busId, status, existing.ID);
+                    "UPDATE tblBusEmployee SET BusID = ?, Status = ?, ScannedBy = ?, ScannedAt = datetime('now'), UpdatedDate = datetime('now') WHERE ID = ?"
+                ).run(busId, status, scannedBy, existing.ID);
                 return existing.ID;
             }
 
             const info = db.prepare(
-                "INSERT INTO tblBusEmployee (EmployeeID, BusID, TravelDate, KM, Status) VALUES (?, ?, ?, NULL, 'KM Pending')"
-            ).run(employeeId, busId, date);
+                "INSERT INTO tblBusEmployee (EmployeeID, BusID, TravelDate, KM, Status, ScannedBy, ScannedAt) VALUES (?, ?, ?, NULL, 'KM Pending', ?, datetime('now'))"
+            ).run(employeeId, busId, date, scannedBy);
             return info.lastInsertRowid;
         });
 
@@ -125,7 +126,8 @@ function listTransactions(req, res) {
 
         let query = `
             SELECT t.ID, t.EmployeeID, e.EmployeeName, e.ICNumber, t.BusID, b.BusNumber,
-                   t.TravelDate, t.KM, t.Status, t.CreatedDate, t.UpdatedDate
+                   t.TravelDate, t.KM, t.Status, t.CreatedDate, t.UpdatedDate,
+                   t.ScannedBy, t.ScannedAt
             FROM tblBusEmployee t
             JOIN tblEmployees e ON e.EmployeeID = t.EmployeeID
             LEFT JOIN tblBuses b ON b.BusID = t.BusID
