@@ -90,10 +90,12 @@ async function loadEmployees() {
     });
 }
 
+let todayEntries = [];
+
 async function loadTodayEntries() {
-    const rows = await apiFetch(`/api/transactions?date=${todayISO()}`);
+    todayEntries = await apiFetch(`/api/transactions?date=${todayISO()}`);
     const body = document.getElementById('entriesBody');
-    body.innerHTML = rows.map(r => `
+    body.innerHTML = todayEntries.map(r => `
         <tr>
             <td>${r.EmployeeID} - ${r.EmployeeName}</td>
             <td>${r.BusNumber || '--'}</td>
@@ -124,6 +126,13 @@ async function submitScan() {
 
     if (!match) {
         showMsg('danger', `Employee "${typed}" not found`);
+        employeeInput.value = '';
+        employeeInput.focus();
+        return;
+    }
+
+    if (todayEntries.some(r => r.EmployeeID === match.EmployeeID)) {
+        showMsg('danger', `${match.EmployeeID} - ${match.EmployeeName} already registered today`);
         employeeInput.value = '';
         employeeInput.focus();
         return;
