@@ -83,6 +83,24 @@
 
     <div class="card shadow-sm mb-4">
         <div class="card-body">
+            <h6 class="card-title mb-3">Add Bus</h6>
+            <form id="addBusForm">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-9">
+                        <label class="form-label small">Bus Number</label>
+                        <input type="text" class="form-control form-control-sm" id="newBusNumber" placeholder="e.g. BUS-003" required>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-success btn-sm w-100">Add</button>
+                    </div>
+                </div>
+                <div id="addBusMsg" class="alert d-none py-2 mt-2 mb-0"></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
             <h6 class="card-title mb-1">Bulk Upload Employees (Excel)</h6>
             <p class="text-muted small mb-3">
                 File should have one Employee Number per row (a header like "Employee Number" in the first row is fine and will be skipped).
@@ -161,6 +179,7 @@ document.getElementById('filterDate').value = todayISO();
 async function loadBusFilter() {
     const buses = await apiFetch('/api/buses');
     const select = document.getElementById('filterBus');
+    select.innerHTML = '<option value="">All Buses</option>';
     buses.forEach(b => {
         const opt = document.createElement('option');
         opt.value = b.BusID;
@@ -226,6 +245,30 @@ document.getElementById('addEmployeeForm').addEventListener('submit', async (e) 
         msg.textContent = `Added employee ${employeeId}`;
         msg.classList.remove('d-none');
         document.getElementById('addEmployeeForm').reset();
+    } catch (err) {
+        msg.className = 'alert alert-danger py-2 mt-2 mb-0';
+        msg.textContent = err.message;
+        msg.classList.remove('d-none');
+    }
+});
+
+document.getElementById('addBusForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('addBusMsg');
+    msg.classList.add('d-none');
+
+    const busNumber = document.getElementById('newBusNumber').value.trim();
+
+    try {
+        await apiFetch('/api/buses', {
+            method: 'POST',
+            body: JSON.stringify({ busNumber })
+        });
+        msg.className = 'alert alert-success py-2 mt-2 mb-0';
+        msg.textContent = `Added bus ${busNumber}`;
+        msg.classList.remove('d-none');
+        document.getElementById('addBusForm').reset();
+        loadBusFilter();
     } catch (err) {
         msg.className = 'alert alert-danger py-2 mt-2 mb-0';
         msg.textContent = err.message;
