@@ -55,7 +55,7 @@
 <script src="/shared/api.js"></script>
 <script>
 const user = Auth.requireRole('admin', 'portal2');
-document.getElementById('whoami').textContent = `${user.username} (${user.role})`;
+document.getElementById('whoami').textContent = user.username;
 document.getElementById('logoutBtn').addEventListener('click', Auth.logout);
 
 const busSelect = document.getElementById('busSelect');

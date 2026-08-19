@@ -77,7 +77,7 @@
 <script src="/shared/api.js"></script>
 <script>
 const user = Auth.requireRole('admin', 'portal1');
-document.getElementById('whoami').textContent = `${user.username} (${user.role})`;
+document.getElementById('whoami').textContent = user.username;
 document.getElementById('logoutBtn').addEventListener('click', Auth.logout);
 
 let employees = [];

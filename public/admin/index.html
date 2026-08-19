@@ -296,7 +296,7 @@
 <script src="/shared/api.js"></script>
 <script>
 const user = Auth.requireRole('admin');
-document.getElementById('whoami').textContent = `${user.username} (${user.role})`;
+document.getElementById('whoami').textContent = user.username;
 document.getElementById('logoutBtn').addEventListener('click', Auth.logout);
 
 document.getElementById('filterDate').value = todayISO();
