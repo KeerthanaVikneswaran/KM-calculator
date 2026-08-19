@@ -89,7 +89,7 @@ async function loadBuses() {
     buses.forEach(b => {
         const opt = document.createElement('option');
         opt.value = b.BusID;
-        opt.textContent = b.BusNumber + (b.BusName ? ` - ${b.BusName}` : '');
+        opt.textContent = b.BusNumber;
         busSelect.appendChild(opt);
     });
 }
