@@ -108,14 +108,23 @@ let todayEntries = [];
 
 async function loadTodayEntries() {
     todayEntries = await apiFetch(`/api/transactions?date=${todayISO()}`);
+    renderEntries();
+}
+
+function renderEntries() {
+    const rows = busSelect.value
+        ? todayEntries.filter(r => String(r.BusID) === String(busSelect.value))
+        : todayEntries;
     const body = document.getElementById('entriesBody');
-    body.innerHTML = todayEntries.map(r => `
+    body.innerHTML = rows.map(r => `
         <tr>
             <td>${r.EmployeeID}</td>
             <td>${r.BusNumber || '--'}</td>
         </tr>
     `).join('') || '<tr><td colspan="2" class="text-muted text-center">No entries yet</td></tr>';
 }
+
+busSelect.addEventListener('change', renderEntries);
 
 function showMsg(type, text) {
     msgBox.className = `alert alert-${type} py-2`;
