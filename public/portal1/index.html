@@ -99,7 +99,7 @@ async function loadEmployees() {
     list.innerHTML = '';
     employees.forEach(e => {
         const opt = document.createElement('option');
-        opt.value = `${e.EmployeeID} - ${e.EmployeeName}`;
+        opt.value = e.EmployeeID;
         list.appendChild(opt);
     });
 }
@@ -111,7 +111,7 @@ async function loadTodayEntries() {
     const body = document.getElementById('entriesBody');
     body.innerHTML = todayEntries.map(r => `
         <tr>
-            <td>${r.EmployeeID} - ${r.EmployeeName}</td>
+            <td>${r.EmployeeID}</td>
             <td>${r.BusNumber || '--'}</td>
         </tr>
     `).join('') || '<tr><td colspan="2" class="text-muted text-center">No entries yet</td></tr>';

@@ -103,7 +103,7 @@ function renderRows() {
         if (editingId === r.EmployeeID) {
             return `
                 <tr>
-                    <td>${r.EmployeeID} - ${r.EmployeeName}</td>
+                    <td>${r.EmployeeID}</td>
                     <td>
                         <div class="input-group input-group-sm">
                             <input type="number" step="0.1" min="0" class="form-control" id="kmInput" value="${r.KM ?? ''}" placeholder="KM">
