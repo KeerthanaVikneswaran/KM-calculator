@@ -95,6 +95,24 @@
 
     <div class="card shadow-sm mb-4">
         <div class="card-body">
+            <h6 class="card-title mb-1">Bulk Upload Employees (Excel)</h6>
+            <p class="text-muted small mb-3">
+                File should have one Employee Number per row (a header like "Employee Number" in the first row is fine and will be skipped).
+            </p>
+            <div class="row g-2 align-items-end">
+                <div class="col-md-9">
+                    <input type="file" class="form-control form-control-sm" id="employeeExcelFile" accept=".xlsx,.xls,.csv">
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-primary btn-sm w-100" id="uploadExcelBtn">Upload</button>
+                </div>
+            </div>
+            <div id="uploadExcelMsg" class="alert d-none py-2 mt-2 mb-0"></div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
             <div class="row g-2 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label small">Date</label>
@@ -143,6 +161,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="/shared/api.js"></script>
 <script>
 const user = Auth.requireRole('admin');
@@ -227,6 +246,59 @@ document.getElementById('addEmployeeForm').addEventListener('submit', async (e) 
         msg.textContent = err.message;
         msg.classList.remove('d-none');
     }
+});
+
+document.getElementById('uploadExcelBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('employeeExcelFile');
+    const msg = document.getElementById('uploadExcelMsg');
+    msg.classList.add('d-none');
+
+    const file = fileInput.files[0];
+    if (!file) {
+        msg.className = 'alert alert-danger py-2 mt-2 mb-0';
+        msg.textContent = 'Choose a file first';
+        msg.classList.remove('d-none');
+        return;
+    }
+
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+    let ids = rows
+        .map(row => (row[0] === undefined || row[0] === null) ? '' : String(row[0]).trim())
+        .filter(v => v !== '');
+
+    if (ids.length && /employee|number|id/i.test(ids[0])) {
+        ids = ids.slice(1);
+    }
+
+    if (!ids.length) {
+        msg.className = 'alert alert-danger py-2 mt-2 mb-0';
+        msg.textContent = 'No Employee Numbers found in that file';
+        msg.classList.remove('d-none');
+        return;
+    }
+
+    let added = 0, skipped = 0, failed = 0;
+    for (const employeeId of ids) {
+        try {
+            await apiFetch('/api/employees', {
+                method: 'POST',
+                body: JSON.stringify({ employeeId, employeeName: employeeId })
+            });
+            added++;
+        } catch (err) {
+            if (/already exists/i.test(err.message)) skipped++;
+            else failed++;
+        }
+    }
+
+    msg.className = failed ? 'alert alert-warning py-2 mt-2 mb-0' : 'alert alert-success py-2 mt-2 mb-0';
+    msg.textContent = `Added: ${added}, already existed: ${skipped}, failed: ${failed}`;
+    msg.classList.remove('d-none');
+    fileInput.value = '';
 });
 
 loadBusFilter();
