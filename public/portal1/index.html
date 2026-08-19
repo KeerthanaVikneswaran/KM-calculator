@@ -190,6 +190,12 @@ async function openQrScanner() {
     qrError.classList.add('d-none');
     qrModal.classList.remove('d-none');
 
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        qrError.textContent = 'Camera needs a secure (https://) link. Open this page using the Railway https:// URL, not a plain http:// address.';
+        qrError.classList.remove('d-none');
+        return;
+    }
+
     try {
         qrStream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: { ideal: 'environment' } }
