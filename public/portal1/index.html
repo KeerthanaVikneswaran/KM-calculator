@@ -47,7 +47,7 @@
                     <div class="table-responsive">
                         <table class="table table-sm align-middle">
                             <thead>
-                                <tr><th>Employee</th><th>Bus</th><th>Status</th></tr>
+                                <tr><th>Employee</th><th>Bus</th></tr>
                             </thead>
                             <tbody id="entriesBody"></tbody>
                         </table>
@@ -97,9 +97,8 @@ async function loadTodayEntries() {
         <tr>
             <td>${r.EmployeeID} - ${r.EmployeeName}</td>
             <td>${r.BusNumber || '--'}</td>
-            <td>${statusBadge(r.Status)}</td>
         </tr>
-    `).join('') || '<tr><td colspan="3" class="text-muted text-center">No entries yet</td></tr>';
+    `).join('') || '<tr><td colspan="2" class="text-muted text-center">No entries yet</td></tr>';
 }
 
 function showMsg(type, text) {
