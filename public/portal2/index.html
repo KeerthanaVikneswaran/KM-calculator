@@ -34,7 +34,10 @@
 
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6 class="card-title">Employees on this Bus (tap an employee to enter KM)</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">Employees on this Bus (tap an employee to enter KM)</h6>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshBtn">Refresh</button>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-sm align-middle">
                             <thead>
@@ -118,7 +121,7 @@ function renderRows() {
         }
         return `
             <tr class="km-row" data-id="${r.EmployeeID}" style="cursor:pointer">
-                <td>${r.EmployeeID} - ${r.EmployeeName}</td>
+                <td>${r.EmployeeID}</td>
                 <td>${r.KM ?? '--'} ${statusBadge(r.Status)}</td>
             </tr>`;
     }).join('');
@@ -158,6 +161,12 @@ async function saveKm() {
 }
 
 busSelect.addEventListener('change', loadEmployeesForBus);
+
+document.getElementById('refreshBtn').addEventListener('click', loadEmployeesForBus);
+
+setInterval(() => {
+    if (busSelect.value && editingId === null) loadEmployeesForBus();
+}, 10000);
 
 loadBuses();
 renderRows();
