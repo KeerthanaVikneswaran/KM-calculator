@@ -33,7 +33,10 @@
 
                     <div class="mb-3">
                         <label class="form-label">Employee ID (type or scan)</label>
-                        <input type="text" class="form-control" id="employeeSearch" list="employeeList" placeholder="Scan or type Employee ID, then Enter" autocomplete="off">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="employeeSearch" list="employeeList" placeholder="Scan or type Employee ID, then Enter" autocomplete="off">
+                            <button type="button" class="btn btn-outline-primary" id="qrScanBtn">Scan QR</button>
+                        </div>
                         <datalist id="employeeList"></datalist>
                     </div>
 
@@ -58,6 +61,17 @@
     </div>
 </div>
 
+<!-- QR scanner modal -->
+<div id="qrModal" class="d-none" style="position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:1050;">
+    <div class="d-flex flex-column align-items-center justify-content-center h-100 p-3">
+        <video id="qrVideo" playsinline style="width:100%; max-width:420px; border-radius:8px;"></video>
+        <div id="qrError" class="alert alert-danger py-2 mt-3 d-none"></div>
+        <button type="button" class="btn btn-light mt-3" id="qrCancelBtn">Cancel</button>
+    </div>
+</div>
+<canvas id="qrCanvas" class="d-none"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="/shared/api.js"></script>
 <script>
 const user = Auth.requireRole('admin', 'portal1');
@@ -163,6 +177,66 @@ employeeInput.addEventListener('keydown', (e) => {
         submitScan();
     }
 });
+
+/* ------------------------- QR camera scanner ------------------------- */
+const qrModal = document.getElementById('qrModal');
+const qrVideo = document.getElementById('qrVideo');
+const qrCanvas = document.getElementById('qrCanvas');
+const qrError = document.getElementById('qrError');
+let qrStream = null;
+let qrLoopId = null;
+
+async function openQrScanner() {
+    qrError.classList.add('d-none');
+    qrModal.classList.remove('d-none');
+
+    try {
+        qrStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } }
+        });
+    } catch (err) {
+        qrError.textContent = 'Could not access camera: ' + err.message;
+        qrError.classList.remove('d-none');
+        return;
+    }
+
+    qrVideo.srcObject = qrStream;
+    qrVideo.setAttribute('playsinline', true);
+    await qrVideo.play();
+
+    const ctx = qrCanvas.getContext('2d');
+    const tick = () => {
+        if (qrVideo.readyState === qrVideo.HAVE_ENOUGH_DATA) {
+            qrCanvas.width = qrVideo.videoWidth;
+            qrCanvas.height = qrVideo.videoHeight;
+            ctx.drawImage(qrVideo, 0, 0, qrCanvas.width, qrCanvas.height);
+            const imageData = ctx.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            if (code && code.data) {
+                closeQrScanner();
+                employeeInput.value = code.data.trim();
+                submitScan();
+                return;
+            }
+        }
+        qrLoopId = requestAnimationFrame(tick);
+    };
+    qrLoopId = requestAnimationFrame(tick);
+}
+
+function closeQrScanner() {
+    qrModal.classList.add('d-none');
+    if (qrLoopId) cancelAnimationFrame(qrLoopId);
+    qrLoopId = null;
+    if (qrStream) {
+        qrStream.getTracks().forEach(t => t.stop());
+        qrStream = null;
+    }
+    qrVideo.srcObject = null;
+}
+
+document.getElementById('qrScanBtn').addEventListener('click', openQrScanner);
+document.getElementById('qrCancelBtn').addEventListener('click', closeQrScanner);
 
 loadBuses();
 loadEmployees();
