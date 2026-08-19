@@ -89,6 +89,17 @@
     table.gov-table tbody tr:hover { background: var(--accent-soft); }
 
     .footer-note { color: var(--muted); font-size: .78rem; text-align: center; margin-top: 24px; }
+
+    .gov-tabs { border-bottom: 1px solid var(--border); }
+    .gov-tabs .nav-link {
+        color: var(--muted); font-weight: 600; font-size: .9rem;
+        border: none; border-bottom: 3px solid transparent; border-radius: 0;
+        padding: 10px 4px; margin-right: 24px;
+    }
+    .gov-tabs .nav-link.active {
+        color: var(--navy); border-bottom-color: var(--accent); background: none;
+    }
+    .gov-tabs .nav-link:hover { border-bottom-color: var(--border); color: var(--navy); }
 </style>
 </head>
 <body>
@@ -111,157 +122,170 @@
 
 <div class="page-wrap">
 
-    <div class="section-label mt-4">Overview</div>
-    <div class="row g-3 mb-4" id="summaryCards">
-        <div class="col-6 col-md">
-            <div class="kpi-card kpi-primary">
-                <div class="kpi-label">Employees</div>
-                <div class="kpi-value" id="cardEmployees">--</div>
-            </div>
-        </div>
-        <div class="col-6 col-md">
-            <div class="kpi-card kpi-primary">
-                <div class="kpi-label">Buses Used</div>
-                <div class="kpi-value" id="cardBuses">--</div>
-            </div>
-        </div>
-        <div class="col-6 col-md">
-            <div class="kpi-card kpi-success">
-                <div class="kpi-label">Completed</div>
-                <div class="kpi-value" id="cardCompleted">--</div>
-            </div>
-        </div>
-        <div class="col-6 col-md">
-            <div class="kpi-card kpi-warning">
-                <div class="kpi-label">Pending</div>
-                <div class="kpi-value" id="cardPending">--</div>
-            </div>
-        </div>
-        <div class="col-6 col-md">
-            <div class="kpi-card kpi-primary">
-                <div class="kpi-label">Total KM</div>
-                <div class="kpi-value" id="cardKM">--</div>
-            </div>
-        </div>
-    </div>
+    <ul class="nav nav-tabs gov-tabs mb-4" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-dashboard" type="button">Dashboard</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-insert" type="button">Data Insert</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-export" type="button">Excel Export</button>
+        </li>
+    </ul>
 
-    <div class="section-label">Data Management</div>
-    <div class="accordion mb-4" id="manageAccordion">
-        <div class="accordion-item panel mb-3">
-            <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseManage">
-                    Add Employees, Buses &amp; Bulk Upload
-                </button>
-            </h2>
-            <div id="collapseManage" class="accordion-collapse collapse" data-bs-parent="#manageAccordion">
-                <div class="accordion-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="panel h-100">
-                                <div class="panel-header"><h6>Add Employee</h6></div>
-                                <div class="panel-body">
-                                    <form id="addEmployeeForm">
-                                        <label class="form-label small">Employee Number OR NIC Number</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="newEmployeeId" placeholder="e.g. EMP004 or 901234567V" required>
-                                            <button type="submit" class="btn btn-success">Add</button>
-                                        </div>
-                                        <div id="addEmployeeMsg" class="alert d-none py-2 mt-2 mb-0"></div>
-                                    </form>
+    <div class="tab-content">
+
+        <!-- ================= DASHBOARD TAB ================= -->
+        <div class="tab-pane fade show active" id="tab-dashboard">
+            <div class="section-label">Overview</div>
+            <div class="row g-3 mb-4" id="summaryCards">
+                <div class="col-6 col-md">
+                    <div class="kpi-card kpi-primary">
+                        <div class="kpi-label">Employees</div>
+                        <div class="kpi-value" id="cardEmployees">--</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md">
+                    <div class="kpi-card kpi-primary">
+                        <div class="kpi-label">Buses Used</div>
+                        <div class="kpi-value" id="cardBuses">--</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md">
+                    <div class="kpi-card kpi-success">
+                        <div class="kpi-label">Completed</div>
+                        <div class="kpi-value" id="cardCompleted">--</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md">
+                    <div class="kpi-card kpi-warning">
+                        <div class="kpi-label">Pending</div>
+                        <div class="kpi-value" id="cardPending">--</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md">
+                    <div class="kpi-card kpi-primary">
+                        <div class="kpi-label">Total KM</div>
+                        <div class="kpi-value" id="cardKM">--</div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-muted small">Figures reflect the Date selected on the Excel Export tab (defaults to today).</p>
+        </div>
+
+        <!-- ================= DATA INSERT TAB ================= -->
+        <div class="tab-pane fade" id="tab-insert">
+            <div class="section-label">Data Management</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="panel h-100">
+                        <div class="panel-header"><h6>Add Employee</h6></div>
+                        <div class="panel-body">
+                            <form id="addEmployeeForm">
+                                <label class="form-label small">Employee Number OR NIC Number</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="newEmployeeId" placeholder="e.g. EMP004 or 901234567V" required>
+                                    <button type="submit" class="btn btn-success">Add</button>
                                 </div>
-                            </div>
+                                <div id="addEmployeeMsg" class="alert d-none py-2 mt-2 mb-0"></div>
+                            </form>
                         </div>
-                        <div class="col-md-6">
-                            <div class="panel h-100">
-                                <div class="panel-header"><h6>Add Bus</h6></div>
-                                <div class="panel-body">
-                                    <form id="addBusForm">
-                                        <label class="form-label small">Bus Number</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="newBusNumber" placeholder="e.g. BUS-003" required>
-                                            <button type="submit" class="btn btn-success">Add</button>
-                                        </div>
-                                        <div id="addBusMsg" class="alert d-none py-2 mt-2 mb-0"></div>
-                                    </form>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="panel h-100">
+                        <div class="panel-header"><h6>Add Bus</h6></div>
+                        <div class="panel-body">
+                            <form id="addBusForm">
+                                <label class="form-label small">Bus Number</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="newBusNumber" placeholder="e.g. BUS-003" required>
+                                    <button type="submit" class="btn btn-success">Add</button>
                                 </div>
-                            </div>
+                                <div id="addBusMsg" class="alert d-none py-2 mt-2 mb-0"></div>
+                            </form>
                         </div>
-                        <div class="col-12">
-                            <div class="panel">
-                                <div class="panel-header"><h6>Bulk Upload Employees (Excel)</h6></div>
-                                <div class="panel-body">
-                                    <p class="text-muted small mb-3">
-                                        File should have one Employee Number per row (a header like "Employee Number" in the first row is fine and will be skipped).
-                                    </p>
-                                    <div class="row g-2 align-items-end">
-                                        <div class="col-md-9">
-                                            <input type="file" class="form-control" id="employeeExcelFile" accept=".xlsx,.xls,.csv">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <button type="button" class="btn btn-primary w-100" id="uploadExcelBtn">Upload</button>
-                                        </div>
-                                    </div>
-                                    <div id="uploadExcelMsg" class="alert d-none py-2 mt-2 mb-0"></div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="panel">
+                        <div class="panel-header"><h6>Bulk Upload Employees (Excel)</h6></div>
+                        <div class="panel-body">
+                            <p class="text-muted small mb-3">
+                                File should have one Employee Number per row (a header like "Employee Number" in the first row is fine and will be skipped).
+                            </p>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-9">
+                                    <input type="file" class="form-control" id="employeeExcelFile" accept=".xlsx,.xls,.csv">
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-primary w-100" id="uploadExcelBtn">Upload</button>
                                 </div>
                             </div>
+                            <div id="uploadExcelMsg" class="alert d-none py-2 mt-2 mb-0"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="section-label">Records</div>
-    <div class="panel mb-4">
-        <div class="panel-body">
-            <div class="row g-2 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label small">Date</label>
-                    <input type="date" class="form-control form-control-sm" id="filterDate">
+        <!-- ================= EXCEL EXPORT TAB ================= -->
+        <div class="tab-pane fade" id="tab-export">
+            <div class="section-label">Records</div>
+            <div class="panel mb-4">
+                <div class="panel-body">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label small">Date</label>
+                            <input type="date" class="form-control form-control-sm" id="filterDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Bus</label>
+                            <select class="form-select form-select-sm" id="filterBus">
+                                <option value="">All Buses</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Employee ID</label>
+                            <input type="text" class="form-control form-control-sm" id="filterEmployee" placeholder="e.g. EMP001">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Status</label>
+                            <select class="form-select form-select-sm" id="filterStatus">
+                                <option value="">All</option>
+                                <option value="Completed">Completed</option>
+                                <option value="KM Pending">KM Pending</option>
+                                <option value="Bus Pending">Bus Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button class="btn btn-primary btn-sm w-100" id="searchBtn">Search</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label small">Bus</label>
-                    <select class="form-select form-select-sm" id="filterBus">
-                        <option value="">All Buses</option>
-                    </select>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h6>Transactions</h6>
+                    <button type="button" class="btn btn-outline-success btn-sm" id="exportExcelBtn">Export Excel</button>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label small">Employee ID</label>
-                    <input type="text" class="form-control form-control-sm" id="filterEmployee" placeholder="e.g. EMP001">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small">Status</label>
-                    <select class="form-select form-select-sm" id="filterStatus">
-                        <option value="">All</option>
-                        <option value="Completed">Completed</option>
-                        <option value="KM Pending">KM Pending</option>
-                        <option value="Bus Pending">Bus Pending</option>
-                    </select>
-                </div>
-                <div class="col-md-1">
-                    <button class="btn btn-primary btn-sm w-100" id="searchBtn">Search</button>
+                <div class="panel-body pt-2">
+                    <div class="table-responsive">
+                        <table class="table table-sm gov-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Employee ID</th><th>Name</th><th>Bus</th><th>Date</th><th>KM</th><th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="panel">
-        <div class="panel-header">
-            <h6>Transactions</h6>
-            <button type="button" class="btn btn-outline-success btn-sm" id="exportExcelBtn">Export Excel</button>
-        </div>
-        <div class="panel-body pt-2">
-            <div class="table-responsive">
-                <table class="table table-sm gov-table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Employee ID</th><th>Name</th><th>Bus</th><th>Date</th><th>KM</th><th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultsBody"></tbody>
-                </table>
-            </div>
-        </div>
     </div>
 
     <p class="footer-note">Bus KM Management System &mdash; Internal Use Only</p>
