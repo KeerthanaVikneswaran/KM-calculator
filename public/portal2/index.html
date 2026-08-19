@@ -70,10 +70,13 @@ async function loadBuses() {
     });
 }
 
+let msgTimer = null;
 function showMsg(type, text) {
+    clearTimeout(msgTimer);
     msgBox.className = `alert alert-${type} py-2`;
     msgBox.textContent = text;
     msgBox.classList.remove('d-none');
+    msgTimer = setTimeout(() => msgBox.classList.add('d-none'), 2000);
 }
 
 async function loadEmployeesForBus() {

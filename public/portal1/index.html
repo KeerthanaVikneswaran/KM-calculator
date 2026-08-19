@@ -112,10 +112,14 @@ async function loadTodayEntries() {
 }
 
 function renderEntries() {
-    const rows = busSelect.value
-        ? todayEntries.filter(r => String(r.BusID) === String(busSelect.value))
-        : todayEntries;
     const body = document.getElementById('entriesBody');
+
+    if (!busSelect.value) {
+        body.innerHTML = '<tr><td colspan="2" class="text-muted text-center">Select a bus to see entries</td></tr>';
+        return;
+    }
+
+    const rows = todayEntries.filter(r => String(r.BusID) === String(busSelect.value));
     body.innerHTML = rows.map(r => `
         <tr>
             <td>${r.EmployeeID}</td>
@@ -126,10 +130,13 @@ function renderEntries() {
 
 busSelect.addEventListener('change', renderEntries);
 
+let msgTimer = null;
 function showMsg(type, text) {
+    clearTimeout(msgTimer);
     msgBox.className = `alert alert-${type} py-2`;
     msgBox.textContent = text;
     msgBox.classList.remove('d-none');
+    msgTimer = setTimeout(() => msgBox.classList.add('d-none'), 2000);
 }
 
 async function submitScan() {
