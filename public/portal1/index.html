@@ -24,40 +24,20 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
                     <h5 class="card-title mb-3">Register Employee to Bus</h5>
-                    <form id="entryForm">
-                        <div class="mb-3">
-                            <label class="form-label">Bus Number</label>
-                            <select class="form-select" id="busSelect" required>
-                                <option value="">Select Bus</option>
-                            </select>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Bus Number</label>
+                        <select class="form-select" id="busSelect" required>
+                            <option value="">Select Bus</option>
+                        </select>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Employee (search ID / IC / Name)</label>
-                            <input type="text" class="form-control" id="employeeSearch" list="employeeList" placeholder="Type Employee ID, IC or Name" required>
-                            <datalist id="employeeList"></datalist>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Employee ID (type or scan)</label>
+                        <input type="text" class="form-control" id="employeeSearch" list="employeeList" placeholder="Scan or type Employee ID, then Enter" autocomplete="off">
+                        <datalist id="employeeList"></datalist>
+                    </div>
 
-                        <div class="row">
-                            <div class="col">
-                                <label class="form-label">Employee Name</label>
-                                <input type="text" class="form-control" id="employeeName" readonly>
-                            </div>
-                            <div class="col">
-                                <label class="form-label">IC Number</label>
-                                <input type="text" class="form-control" id="icNumber" readonly>
-                            </div>
-                        </div>
-
-                        <div class="mb-3 mt-3">
-                            <label class="form-label">Date</label>
-                            <input type="date" class="form-control" id="travelDate" required>
-                        </div>
-
-                        <div id="msgBox" class="alert d-none py-2"></div>
-
-                        <button type="submit" class="btn btn-primary w-100">Save</button>
-                    </form>
+                    <div id="msgBox" class="alert d-none py-2"></div>
                 </div>
             </div>
 
@@ -67,7 +47,7 @@
                     <div class="table-responsive">
                         <table class="table table-sm align-middle">
                             <thead>
-                                <tr><th>Employee</th><th>Bus</th><th>KM</th><th>Status</th></tr>
+                                <tr><th>Employee</th><th>Bus</th><th>Status</th></tr>
                             </thead>
                             <tbody id="entriesBody"></tbody>
                         </table>
@@ -85,18 +65,17 @@ document.getElementById('whoami').textContent = `${user.username} (${user.role})
 document.getElementById('logoutBtn').addEventListener('click', Auth.logout);
 
 let employees = [];
-let selectedEmployeeId = null;
-const dateInput = document.getElementById('travelDate');
-dateInput.value = todayISO();
+const employeeInput = document.getElementById('employeeSearch');
+const busSelect = document.getElementById('busSelect');
+const msgBox = document.getElementById('msgBox');
 
 async function loadBuses() {
     const buses = await apiFetch('/api/buses');
-    const select = document.getElementById('busSelect');
     buses.forEach(b => {
         const opt = document.createElement('option');
         opt.value = b.BusID;
         opt.textContent = b.BusNumber + (b.BusName ? ` - ${b.BusName}` : '');
-        select.appendChild(opt);
+        busSelect.appendChild(opt);
     });
 }
 
@@ -111,44 +90,43 @@ async function loadEmployees() {
     });
 }
 
-document.getElementById('employeeSearch').addEventListener('input', (e) => {
-    const typed = e.target.value.trim();
-    const id = typed.split(' - ')[0].trim();
-    const match = employees.find(emp => emp.EmployeeID.toLowerCase() === id.toLowerCase()
-        || emp.ICNumber === typed);
-    if (match) {
-        selectedEmployeeId = match.EmployeeID;
-        document.getElementById('employeeName').value = match.EmployeeName;
-        document.getElementById('icNumber').value = match.ICNumber || '';
-    } else {
-        selectedEmployeeId = null;
-        document.getElementById('employeeName').value = '';
-        document.getElementById('icNumber').value = '';
-    }
-});
-
 async function loadTodayEntries() {
-    const rows = await apiFetch(`/api/transactions?date=${dateInput.value}`);
+    const rows = await apiFetch(`/api/transactions?date=${todayISO()}`);
     const body = document.getElementById('entriesBody');
     body.innerHTML = rows.map(r => `
         <tr>
             <td>${r.EmployeeID} - ${r.EmployeeName}</td>
             <td>${r.BusNumber || '--'}</td>
-            <td>${r.KM ?? '--'}</td>
             <td>${statusBadge(r.Status)}</td>
         </tr>
-    `).join('') || '<tr><td colspan="4" class="text-muted text-center">No entries yet</td></tr>';
+    `).join('') || '<tr><td colspan="3" class="text-muted text-center">No entries yet</td></tr>';
 }
 
-document.getElementById('entryForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const msgBox = document.getElementById('msgBox');
-    msgBox.classList.add('d-none');
+function showMsg(type, text) {
+    msgBox.className = `alert alert-${type} py-2`;
+    msgBox.textContent = text;
+    msgBox.classList.remove('d-none');
+}
 
-    if (!selectedEmployeeId) {
-        msgBox.className = 'alert alert-danger py-2';
-        msgBox.textContent = 'Please select a valid employee from the list';
-        msgBox.classList.remove('d-none');
+async function submitScan() {
+    const typed = employeeInput.value.trim();
+    if (!typed) return;
+
+    if (!busSelect.value) {
+        showMsg('danger', 'Please select a bus first');
+        employeeInput.value = '';
+        busSelect.focus();
+        return;
+    }
+
+    const id = typed.split(' - ')[0].trim();
+    const match = employees.find(emp => emp.EmployeeID.toLowerCase() === id.toLowerCase()
+        || emp.ICNumber === typed);
+
+    if (!match) {
+        showMsg('danger', `Employee "${typed}" not found`);
+        employeeInput.value = '';
+        employeeInput.focus();
         return;
     }
 
@@ -156,33 +134,32 @@ document.getElementById('entryForm').addEventListener('submit', async (e) => {
         const data = await apiFetch('/api/bus-entry', {
             method: 'POST',
             body: JSON.stringify({
-                employeeId: selectedEmployeeId,
-                busId: document.getElementById('busSelect').value,
-                travelDate: dateInput.value
+                employeeId: match.EmployeeID,
+                busId: busSelect.value,
+                travelDate: todayISO()
             })
         });
-        msgBox.className = 'alert alert-success py-2';
-        msgBox.textContent = `Saved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber} (${data.transaction.Status})`;
-        msgBox.classList.remove('d-none');
-
-        document.getElementById('employeeSearch').value = '';
-        document.getElementById('employeeName').value = '';
-        document.getElementById('icNumber').value = '';
-        selectedEmployeeId = null;
-
+        showMsg('success', `Saved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber} (${data.transaction.Status})`);
         loadTodayEntries();
     } catch (err) {
-        msgBox.className = 'alert alert-danger py-2';
-        msgBox.textContent = err.message;
-        msgBox.classList.remove('d-none');
+        showMsg('danger', err.message);
+    }
+
+    employeeInput.value = '';
+    employeeInput.focus();
+}
+
+employeeInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        submitScan();
     }
 });
-
-dateInput.addEventListener('change', loadTodayEntries);
 
 loadBuses();
 loadEmployees();
 loadTodayEntries();
+employeeInput.focus();
 </script>
 </body>
 </html>
