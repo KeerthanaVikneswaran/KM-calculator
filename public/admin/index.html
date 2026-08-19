@@ -68,23 +68,11 @@
             <h6 class="card-title mb-3">Add Employee</h6>
             <form id="addEmployeeForm">
                 <div class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label small">Employee ID</label>
-                        <input type="text" class="form-control form-control-sm" id="newEmployeeId" placeholder="e.g. EMP004" required>
+                    <div class="col-md-9">
+                        <label class="form-label small">Employee Number OR NIC Number</label>
+                        <input type="text" class="form-control form-control-sm" id="newEmployeeId" placeholder="e.g. EMP004 or 901234567V" required>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label small">Name</label>
-                        <input type="text" class="form-control form-control-sm" id="newEmployeeName" required>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small">IC Number</label>
-                        <input type="text" class="form-control form-control-sm" id="newEmployeeIC">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small">Department</label>
-                        <input type="text" class="form-control form-control-sm" id="newEmployeeDept">
-                    </div>
-                    <div class="col-md-1">
                         <button type="submit" class="btn btn-success btn-sm w-100">Add</button>
                     </div>
                 </div>
@@ -228,14 +216,11 @@ document.getElementById('addEmployeeForm').addEventListener('submit', async (e) 
     msg.classList.add('d-none');
 
     const employeeId = document.getElementById('newEmployeeId').value.trim();
-    const employeeName = document.getElementById('newEmployeeName').value.trim();
-    const icNumber = document.getElementById('newEmployeeIC').value.trim();
-    const department = document.getElementById('newEmployeeDept').value.trim();
 
     try {
         await apiFetch('/api/employees', {
             method: 'POST',
-            body: JSON.stringify({ employeeId, employeeName, icNumber, department })
+            body: JSON.stringify({ employeeId, employeeName: employeeId })
         });
         msg.className = 'alert alert-success py-2 mt-2 mb-0';
         msg.textContent = `Added employee ${employeeId}`;
