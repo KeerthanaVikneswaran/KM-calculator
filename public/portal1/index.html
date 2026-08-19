@@ -147,7 +147,7 @@ async function submitScan() {
                 travelDate: todayISO()
             })
         });
-        showMsg('success', `Saved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber} (${data.transaction.Status})`);
+        showMsg('success', `Saved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber}`);
         loadTodayEntries();
     } catch (err) {
         showMsg('danger', err.message);
