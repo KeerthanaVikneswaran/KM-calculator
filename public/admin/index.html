@@ -343,7 +343,7 @@
                     <div class="table-responsive">
                         <table class="table table-sm gov-table align-middle mb-0">
                             <thead>
-                                <tr><th>Username</th><th>Role</th><th>Bus</th><th>Status</th></tr>
+                                <tr><th>Username</th><th>Role</th><th>Bus</th><th>Status</th><th>Actions</th></tr>
                             </thead>
                             <tbody id="usersBody"></tbody>
                         </table>
@@ -552,29 +552,105 @@ document.getElementById('uploadExcelBtn').addEventListener('click', async () => 
     fileInput.value = '';
 });
 
-async function loadUserBusOptions() {
-    const buses = await apiFetch('/api/buses');
-    const select = document.getElementById('newUserBus');
-    select.innerHTML = '<option value="">No bus / manual select</option>';
-    buses.forEach(b => {
-        const opt = document.createElement('option');
-        opt.value = b.BusNumber;
-        opt.textContent = b.BusNumber;
-        select.appendChild(opt);
+let busesCache = [];
+
+function busOptionsHtml(selectedBusNumber) {
+    const opts = ['<option value="">No bus / manual select</option>'];
+    busesCache.forEach(b => {
+        const sel = b.BusNumber === selectedBusNumber ? ' selected' : '';
+        opts.push(`<option value="${b.BusNumber}"${sel}>${b.BusNumber}</option>`);
     });
+    return opts.join('');
 }
 
+async function loadUserBusOptions() {
+    busesCache = await apiFetch('/api/buses');
+    document.getElementById('newUserBus').innerHTML = busOptionsHtml(null);
+}
+
+let allUsers = [];
+let editingUserId = null;
+
 async function loadUsersList() {
-    const rows = await apiFetch('/api/users');
+    allUsers = await apiFetch('/api/users');
+    editingUserId = null;
+    renderUsersTable();
+}
+
+function renderUsersTable() {
     const body = document.getElementById('usersBody');
-    body.innerHTML = rows.map(r => `
-        <tr>
-            <td>${r.Username}</td>
-            <td>${r.Role}</td>
-            <td>${r.BusNumber || '--'}</td>
-            <td>${r.IsActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}</td>
-        </tr>
-    `).join('') || '<tr><td colspan="4" class="text-muted text-center">No users found</td></tr>';
+
+    body.innerHTML = allUsers.map(r => {
+        if (editingUserId === r.UserID) {
+            return `
+                <tr>
+                    <td><input type="text" class="form-control form-control-sm" id="editUsername" value="${r.Username}"></td>
+                    <td>
+                        <select class="form-select form-select-sm" id="editRole">
+                            <option value="portal1" ${r.Role === 'portal1' ? 'selected' : ''}>Portal 1</option>
+                            <option value="portal2" ${r.Role === 'portal2' ? 'selected' : ''}>Portal 2</option>
+                            <option value="admin" ${r.Role === 'admin' ? 'selected' : ''}>Admin</option>
+                        </select>
+                    </td>
+                    <td><select class="form-select form-select-sm" id="editBus">${busOptionsHtml(r.BusNumber)}</select></td>
+                    <td><input type="text" class="form-control form-control-sm" id="editPassword" placeholder="Leave blank to keep"></td>
+                    <td class="text-nowrap">
+                        <button class="btn btn-success btn-sm" id="editSaveBtn">Save</button>
+                        <button class="btn btn-outline-secondary btn-sm" id="editCancelBtn">Cancel</button>
+                    </td>
+                </tr>`;
+        }
+        return `
+            <tr>
+                <td>${r.Username}</td>
+                <td>${r.Role}</td>
+                <td>${r.BusNumber || '--'}</td>
+                <td>${r.IsActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}</td>
+                <td class="text-nowrap">
+                    <button class="btn btn-outline-primary btn-sm user-edit-btn" data-id="${r.UserID}">Edit</button>
+                    <button class="btn btn-outline-danger btn-sm user-delete-btn" data-id="${r.UserID}" data-username="${r.Username}">Delete</button>
+                </td>
+            </tr>`;
+    }).join('') || '<tr><td colspan="5" class="text-muted text-center">No users found</td></tr>';
+
+    if (editingUserId) {
+        document.getElementById('editSaveBtn').addEventListener('click', saveUserEdit);
+        document.getElementById('editCancelBtn').addEventListener('click', () => { editingUserId = null; renderUsersTable(); });
+    } else {
+        document.querySelectorAll('.user-edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => { editingUserId = Number(btn.dataset.id); renderUsersTable(); });
+        });
+        document.querySelectorAll('.user-delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => deleteUserRow(Number(btn.dataset.id), btn.dataset.username));
+        });
+    }
+}
+
+async function saveUserEdit() {
+    const username = document.getElementById('editUsername').value.trim();
+    const role = document.getElementById('editRole').value;
+    const busNumber = document.getElementById('editBus').value;
+    const password = document.getElementById('editPassword').value;
+
+    try {
+        await apiFetch(`/api/users/${editingUserId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ username, role, busNumber: busNumber || null, password: password || undefined })
+        });
+        await loadUsersList();
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+async function deleteUserRow(id, username) {
+    if (!confirm(`Delete login "${username}"? This cannot be undone.`)) return;
+    try {
+        await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
+        await loadUsersList();
+    } catch (err) {
+        alert(err.message);
+    }
 }
 
 document.getElementById('addUserForm').addEventListener('submit', async (e) => {
