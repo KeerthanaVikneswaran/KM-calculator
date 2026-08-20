@@ -142,6 +142,9 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-export" type="button">Excel Export</button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-users" type="button">Users</button>
+        </li>
     </ul>
 
     <div class="tab-content">
@@ -290,6 +293,59 @@
                                 </tr>
                             </thead>
                             <tbody id="resultsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= USERS TAB ================= -->
+        <div class="tab-pane fade" id="tab-users">
+            <div class="section-label">Create Login</div>
+            <div class="panel mb-4">
+                <div class="panel-body">
+                    <form id="addUserForm">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label small">Username</label>
+                                <input type="text" class="form-control form-control-sm" id="newUsername" placeholder="e.g. user11" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Password</label>
+                                <input type="text" class="form-control form-control-sm" id="newUserPassword" placeholder="e.g. user11@123" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Role</label>
+                                <select class="form-select form-select-sm" id="newUserRole" required>
+                                    <option value="portal1">Portal 1</option>
+                                    <option value="portal2">Portal 2</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Bus (Portal 1/2 only)</label>
+                                <select class="form-select form-select-sm" id="newUserBus">
+                                    <option value="">No bus / manual select</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="submit" class="btn btn-success btn-sm w-100">Add</button>
+                            </div>
+                        </div>
+                        <div id="addUserMsg" class="alert d-none py-2 mt-2 mb-0"></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="section-label">Existing Logins</div>
+            <div class="panel">
+                <div class="panel-body pt-2">
+                    <div class="table-responsive">
+                        <table class="table table-sm gov-table align-middle mb-0">
+                            <thead>
+                                <tr><th>Username</th><th>Role</th><th>Bus</th><th>Status</th></tr>
+                            </thead>
+                            <tbody id="usersBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -496,9 +552,63 @@ document.getElementById('uploadExcelBtn').addEventListener('click', async () => 
     fileInput.value = '';
 });
 
+async function loadUserBusOptions() {
+    const buses = await apiFetch('/api/buses');
+    const select = document.getElementById('newUserBus');
+    select.innerHTML = '<option value="">No bus / manual select</option>';
+    buses.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.BusNumber;
+        opt.textContent = b.BusNumber;
+        select.appendChild(opt);
+    });
+}
+
+async function loadUsersList() {
+    const rows = await apiFetch('/api/users');
+    const body = document.getElementById('usersBody');
+    body.innerHTML = rows.map(r => `
+        <tr>
+            <td>${r.Username}</td>
+            <td>${r.Role}</td>
+            <td>${r.BusNumber || '--'}</td>
+            <td>${r.IsActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}</td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" class="text-muted text-center">No users found</td></tr>';
+}
+
+document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('addUserMsg');
+    msg.classList.add('d-none');
+
+    const username = document.getElementById('newUsername').value.trim();
+    const password = document.getElementById('newUserPassword').value;
+    const role = document.getElementById('newUserRole').value;
+    const busNumber = document.getElementById('newUserBus').value;
+
+    try {
+        await apiFetch('/api/users', {
+            method: 'POST',
+            body: JSON.stringify({ username, password, role, busNumber: busNumber || null })
+        });
+        msg.className = 'alert alert-success py-2 mt-2 mb-0';
+        msg.textContent = `Created login ${username} (${role})`;
+        msg.classList.remove('d-none');
+        document.getElementById('addUserForm').reset();
+        loadUsersList();
+    } catch (err) {
+        msg.className = 'alert alert-danger py-2 mt-2 mb-0';
+        msg.textContent = err.message;
+        msg.classList.remove('d-none');
+    }
+});
+
 loadBusFilter();
 loadSummary();
 loadResults();
+loadUserBusOptions();
+loadUsersList();
 </script>
 </body>
 </html>
