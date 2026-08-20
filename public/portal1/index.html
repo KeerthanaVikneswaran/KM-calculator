@@ -173,8 +173,7 @@ async function submitScan() {
     }
 
     const id = typed.split(' - ')[0].trim();
-    const match = employees.find(emp => emp.EmployeeID.toLowerCase() === id.toLowerCase()
-        || emp.ICNumber === typed);
+    const match = employees.find(emp => emp.EmployeeID.toLowerCase() === id.toLowerCase());
 
     if (!match) {
         showMsg('danger', `Employee "${typed}" not found`);
