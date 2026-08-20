@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS tblBusEmployee (
     Status          TEXT NOT NULL DEFAULT 'Bus Pending' CHECK (Status IN ('Bus Pending','KM Pending','Completed')),
     ScannedBy       TEXT,
     ScannedAt       TEXT,
+    KmEnteredBy     TEXT,
+    KmEnteredAt     TEXT,
     CreatedDate     TEXT NOT NULL DEFAULT (datetime('now')),
     UpdatedDate     TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE (EmployeeID, TravelDate)

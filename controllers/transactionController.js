@@ -64,6 +64,7 @@ function createBusEntry(req, res) {
    --------------------------------------------------------- */
 function createKmEntry(req, res) {
     const { employeeId, travelDate, km } = req.body;
+    const kmEnteredBy = req.user ? req.user.username : null;
 
     if (!employeeId || !travelDate || km === undefined || km === null || km === '') {
         return res.status(400).json({ message: 'employeeId, travelDate and km are required' });
@@ -87,14 +88,14 @@ function createKmEntry(req, res) {
             if (existing) {
                 const status = existing.BusID !== null ? 'Completed' : 'Bus Pending';
                 db.prepare(
-                    "UPDATE tblBusEmployee SET KM = ?, Status = ?, UpdatedDate = datetime('now') WHERE ID = ?"
-                ).run(kmValue, status, existing.ID);
+                    "UPDATE tblBusEmployee SET KM = ?, Status = ?, KmEnteredBy = ?, KmEnteredAt = datetime('now'), UpdatedDate = datetime('now') WHERE ID = ?"
+                ).run(kmValue, status, kmEnteredBy, existing.ID);
                 return existing.ID;
             }
 
             const info = db.prepare(
-                "INSERT INTO tblBusEmployee (EmployeeID, BusID, TravelDate, KM, Status) VALUES (?, NULL, ?, ?, 'Bus Pending')"
-            ).run(employeeId, date, kmValue);
+                "INSERT INTO tblBusEmployee (EmployeeID, BusID, TravelDate, KM, Status, KmEnteredBy, KmEnteredAt) VALUES (?, NULL, ?, ?, 'Bus Pending', ?, datetime('now'))"
+            ).run(employeeId, date, kmValue, kmEnteredBy);
             return info.lastInsertRowid;
         });
 
@@ -127,7 +128,7 @@ function listTransactions(req, res) {
         let query = `
             SELECT t.ID, t.EmployeeID, e.EmployeeName, e.ICNumber, t.BusID, b.BusNumber,
                    t.TravelDate, t.KM, t.Status, t.CreatedDate, t.UpdatedDate,
-                   t.ScannedBy, t.ScannedAt
+                   t.ScannedBy, t.ScannedAt, t.KmEnteredBy, t.KmEnteredAt
             FROM tblBusEmployee t
             JOIN tblEmployees e ON e.EmployeeID = t.EmployeeID
             LEFT JOIN tblBuses b ON b.BusID = t.BusID

@@ -43,7 +43,12 @@
                         <div id="fixedBusBadge" class="form-control bg-light fw-bold d-none"></div>
                     </div>
 
-                    <div class="mb-3">
+                    <ul class="nav nav-pills mb-3" id="regModeTabs">
+                        <li class="nav-item"><button type="button" class="nav-link active" data-mode="id">Scan Employee ID</button></li>
+                        <li class="nav-item"><button type="button" class="nav-link" data-mode="dob">No Employee ID</button></li>
+                    </ul>
+
+                    <div id="modeIdPanel" class="mb-3">
                         <label class="form-label">Employee ID</label>
                         <div class="input-group scan-group">
                             <input type="text" class="form-control" id="employeeSearch" list="employeeList" placeholder="Scan or type Employee ID, then Enter" autocomplete="off">
@@ -51,6 +56,14 @@
                             <button type="button" class="btn btn-outline-primary" id="qrScanBtn">Scan QR</button>
                         </div>
                         <datalist id="employeeList"></datalist>
+                    </div>
+
+                    <div id="modeDobPanel" class="mb-3 d-none">
+                        <label class="form-label">Date of Birth</label>
+                        <div class="input-group">
+                            <input type="date" class="form-control" id="dobInput">
+                            <button type="button" class="btn btn-primary" id="dobAddBtn">Add</button>
+                        </div>
                     </div>
 
                     <div id="msgBox" class="alert d-none py-2"></div>
@@ -121,7 +134,7 @@ async function loadEmployees() {
     list.innerHTML = '';
     employees.forEach(e => {
         const opt = document.createElement('option');
-        opt.value = e.EmployeeID;
+        opt.value = `${e.EmployeeID} - ${e.EmployeeName}`;
         list.appendChild(opt);
     });
 }
@@ -144,7 +157,7 @@ function renderEntries() {
     const rows = todayEntries.filter(r => String(r.BusID) === String(busSelect.value));
     body.innerHTML = rows.map(r => `
         <tr>
-            <td>${r.EmployeeID}</td>
+            <td>${r.EmployeeID} - ${r.EmployeeName}</td>
             <td>${r.BusNumber || '--'}</td>
         </tr>
     `).join('') || '<tr><td colspan="2" class="text-muted text-center">No entries yet</td></tr>';
@@ -216,6 +229,70 @@ employeeInput.addEventListener('keydown', (e) => {
 });
 
 document.getElementById('addBtn').addEventListener('click', submitScan);
+
+/* ------------------------- No Employee ID (Date of Birth) mode ------------------------- */
+document.querySelectorAll('#regModeTabs .nav-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('#regModeTabs .nav-link').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const mode = btn.dataset.mode;
+        document.getElementById('modeIdPanel').classList.toggle('d-none', mode !== 'id');
+        document.getElementById('modeDobPanel').classList.toggle('d-none', mode !== 'dob');
+    });
+});
+
+const dobInput = document.getElementById('dobInput');
+
+async function submitDob() {
+    const dob = dobInput.value;
+    if (!dob) return;
+
+    if (!busSelect.value) {
+        showMsg('danger', 'Please select a bus first');
+        return;
+    }
+
+    if (todayEntries.some(r => r.EmployeeID === dob)) {
+        showMsg('danger', `${dob} already registered today`);
+        dobInput.value = '';
+        return;
+    }
+
+    try {
+        try {
+            await apiFetch('/api/employees', {
+                method: 'POST',
+                body: JSON.stringify({ employeeId: dob, employeeName: dob })
+            });
+            loadEmployees();
+        } catch (err) {
+            if (!/already exists/i.test(err.message)) throw err;
+        }
+
+        const data = await apiFetch('/api/bus-entry', {
+            method: 'POST',
+            body: JSON.stringify({
+                employeeId: dob,
+                busId: busSelect.value,
+                travelDate: todayISO()
+            })
+        });
+        showMsg('success', `Saved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber}`);
+        loadTodayEntries();
+    } catch (err) {
+        showMsg('danger', err.message);
+    }
+
+    dobInput.value = '';
+}
+
+document.getElementById('dobAddBtn').addEventListener('click', submitDob);
+dobInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        submitDob();
+    }
+});
 
 /* ------------------------- QR camera scanner ------------------------- */
 const qrModal = document.getElementById('qrModal');

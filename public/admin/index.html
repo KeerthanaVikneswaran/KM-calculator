@@ -451,7 +451,11 @@ document.getElementById('exportExcelBtn').addEventListener('click', () => {
     const data = currentResults.map(r => ({
         'Employee ID / NIC': r.EmployeeID,
         'Bus Number': r.BusNumber || '',
-        'KM': r.KM ?? ''
+        'KM': r.KM ?? '',
+        'Scanned By': r.ScannedBy || '',
+        'Scanned At': r.ScannedAt || '',
+        'KM Entered By': r.KmEnteredBy || '',
+        'KM Entered At': r.KmEnteredAt || ''
     }));
 
     const date = document.getElementById('filterDate').value || todayISO();

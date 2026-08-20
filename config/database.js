@@ -22,6 +22,8 @@ function ensureColumn(table, column, definition) {
 ensureColumn('tblUsers', 'BusID', 'INTEGER REFERENCES tblBuses(BusID)');
 ensureColumn('tblBusEmployee', 'ScannedBy', 'TEXT');
 ensureColumn('tblBusEmployee', 'ScannedAt', 'TEXT');
+ensureColumn('tblBusEmployee', 'KmEnteredBy', 'TEXT');
+ensureColumn('tblBusEmployee', 'KmEnteredAt', 'TEXT');
 
 console.log('Connected to SQLite database:', dbPath);
 
