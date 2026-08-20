@@ -240,6 +240,25 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-12">
+                    <div class="panel">
+                        <div class="panel-header"><h6>Bulk Upload Buses (Excel)</h6></div>
+                        <div class="panel-body">
+                            <p class="text-muted small mb-3">
+                                File should have one Bus Number per row (a header like "Bus Number" in the first row is fine and will be skipped).
+                            </p>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-9">
+                                    <input type="file" class="form-control" id="busExcelFile" accept=".xlsx,.xls,.csv">
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-primary w-100" id="uploadBusExcelBtn">Upload</button>
+                                </div>
+                            </div>
+                            <div id="uploadBusExcelMsg" class="alert d-none py-2 mt-2 mb-0"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -550,6 +569,71 @@ document.getElementById('uploadExcelBtn').addEventListener('click', async () => 
         ${failedIds.length ? `<br><small>Failed: ${esc(failedIds.join(', '))}</small>` : ''}
     `;
     fileInput.value = '';
+});
+
+document.getElementById('uploadBusExcelBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('busExcelFile');
+    const msg = document.getElementById('uploadBusExcelMsg');
+    msg.classList.add('d-none');
+
+    const file = fileInput.files[0];
+    if (!file) {
+        msg.className = 'alert alert-danger py-2 mt-2 mb-0';
+        msg.textContent = 'Choose a file first';
+        msg.classList.remove('d-none');
+        return;
+    }
+
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+    let numbers = rows
+        .map(row => (row[0] === undefined || row[0] === null) ? '' : String(row[0]).trim())
+        .filter(v => v !== '');
+
+    if (numbers.length && /bus|number/i.test(numbers[0])) {
+        numbers = numbers.slice(1);
+    }
+
+    if (!numbers.length) {
+        msg.className = 'alert alert-danger py-2 mt-2 mb-0';
+        msg.textContent = 'No Bus Numbers found in that file';
+        msg.classList.remove('d-none');
+        return;
+    }
+
+    const addedNumbers = [], skippedNumbers = [], failedNumbers = [];
+    msg.className = 'alert alert-info py-2 mt-2 mb-0';
+    msg.classList.remove('d-none');
+
+    for (let i = 0; i < numbers.length; i++) {
+        const busNumber = numbers[i];
+        msg.textContent = `Uploading ${i + 1} of ${numbers.length}...`;
+        try {
+            await apiFetch('/api/buses', {
+                method: 'POST',
+                body: JSON.stringify({ busNumber })
+            });
+            addedNumbers.push(busNumber);
+        } catch (err) {
+            if (/already exists/i.test(err.message)) skippedNumbers.push(busNumber);
+            else failedNumbers.push(busNumber);
+        }
+    }
+
+    const escBus = (s) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    msg.className = failedNumbers.length ? 'alert alert-warning py-2 mt-2 mb-0' : 'alert alert-success py-2 mt-2 mb-0';
+    msg.innerHTML = `
+        Added: ${addedNumbers.length}, already existed: ${skippedNumbers.length}, failed: ${failedNumbers.length}
+        ${skippedNumbers.length ? `<br><small>Already existed: ${escBus(skippedNumbers.join(', '))}</small>` : ''}
+        ${failedNumbers.length ? `<br><small>Failed: ${escBus(failedNumbers.join(', '))}</small>` : ''}
+    `;
+    fileInput.value = '';
+    loadBusFilter();
+    loadUserBusOptions();
 });
 
 let busesCache = [];
