@@ -5,6 +5,6 @@ const { listEmployees, getEmployee, createEmployee } = require('../controllers/e
 
 router.get('/', authenticate, listEmployees);
 router.get('/:id', authenticate, getEmployee);
-router.post('/', authenticate, authorize('admin'), createEmployee);
+router.post('/', authenticate, authorize('admin', 'portal1'), createEmployee);
 
 module.exports = router;
