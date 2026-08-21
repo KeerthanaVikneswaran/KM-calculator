@@ -356,6 +356,21 @@
                 </div>
             </div>
 
+            <div class="panel mb-4">
+                <div class="panel-body">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div>
+                            <h6 class="mb-1">Create Login for Every Bus</h6>
+                            <p class="text-muted small mb-0">
+                                Creates a Portal 1 login per bus: username = Bus Number, password = "BusNumber@123" (e.g. BUS001 / BUS001@123). Buses that already have a Portal 1 login are skipped.
+                            </p>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm text-nowrap" id="bulkBusUserBtn">Create Logins</button>
+                    </div>
+                    <div id="bulkBusUserMsg" class="alert d-none py-2 mt-2 mb-0"></div>
+                </div>
+            </div>
+
             <div class="section-label">Existing Logins</div>
             <div class="panel">
                 <div class="panel-body pt-2">
@@ -765,6 +780,55 @@ document.getElementById('addUserForm').addEventListener('submit', async (e) => {
         msg.textContent = err.message;
         msg.classList.remove('d-none');
     }
+});
+
+document.getElementById('bulkBusUserBtn').addEventListener('click', async () => {
+    const msg = document.getElementById('bulkBusUserMsg');
+    msg.className = 'alert alert-info py-2 mt-2 mb-0';
+    msg.classList.remove('d-none');
+
+    const busesToUse = busesCache.length ? busesCache : await apiFetch('/api/buses');
+    const busNumbersWithPortal1 = new Set(
+        allUsers.filter(u => u.Role === 'portal1' && u.BusNumber).map(u => u.BusNumber)
+    );
+
+    const created = [], skipped = [], failed = [];
+
+    for (let i = 0; i < busesToUse.length; i++) {
+        const bus = busesToUse[i];
+        msg.textContent = `Creating ${i + 1} of ${busesToUse.length}...`;
+
+        if (busNumbersWithPortal1.has(bus.BusNumber)) {
+            skipped.push(bus.BusNumber);
+            continue;
+        }
+
+        try {
+            await apiFetch('/api/users', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username: bus.BusNumber,
+                    password: `${bus.BusNumber}@123`,
+                    role: 'portal1',
+                    busNumber: bus.BusNumber
+                })
+            });
+            created.push(bus.BusNumber);
+        } catch (err) {
+            if (/already exists/i.test(err.message)) skipped.push(bus.BusNumber);
+            else failed.push(bus.BusNumber);
+        }
+    }
+
+    const escBulk = (s) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    msg.className = failed.length ? 'alert alert-warning py-2 mt-2 mb-0' : 'alert alert-success py-2 mt-2 mb-0';
+    msg.innerHTML = `
+        Created: ${created.length}, skipped (already had a login): ${skipped.length}, failed: ${failed.length}
+        ${created.length ? `<br><small>Created: ${escBulk(created.join(', '))} (password = BusNumber@123)</small>` : ''}
+        ${failed.length ? `<br><small>Failed: ${escBulk(failed.join(', '))}</small>` : ''}
+    `;
+    loadUsersList();
 });
 
 loadBusFilter();
