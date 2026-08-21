@@ -195,8 +195,9 @@ async function submitScan() {
         return;
     }
 
-    if (todayEntries.some(r => r.EmployeeID === match.EmployeeID)) {
-        showMsg('danger', `${match.EmployeeID} - ${match.EmployeeName} already registered today`);
+    const existing = todayEntries.find(r => r.EmployeeID === match.EmployeeID);
+    if (existing && String(existing.BusID) === String(busSelect.value)) {
+        showMsg('danger', `${match.EmployeeID} - ${match.EmployeeName} already registered on this bus today`);
         employeeInput.value = '';
         employeeInput.focus();
         return;
@@ -211,7 +212,10 @@ async function submitScan() {
                 travelDate: todayISO()
             })
         });
-        showMsg('success', `Saved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber}`);
+        const msg = existing
+            ? `Moved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber} (was ${existing.BusNumber || 'unassigned'})`
+            : `Saved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber}`;
+        showMsg('success', msg);
         loadTodayEntries();
     } catch (err) {
         showMsg('danger', err.message);
@@ -252,8 +256,9 @@ async function submitDob() {
         return;
     }
 
-    if (todayEntries.some(r => r.EmployeeID === dob)) {
-        showMsg('danger', `${dob} already registered today`);
+    const existing = todayEntries.find(r => r.EmployeeID === dob);
+    if (existing && String(existing.BusID) === String(busSelect.value)) {
+        showMsg('danger', `${dob} already registered on this bus today`);
         dobInput.value = '';
         return;
     }
@@ -277,7 +282,10 @@ async function submitDob() {
                 travelDate: todayISO()
             })
         });
-        showMsg('success', `Saved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber}`);
+        const msg = existing
+            ? `Moved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber} (was ${existing.BusNumber || 'unassigned'})`
+            : `Saved: ${data.transaction.EmployeeID} -> ${data.transaction.BusNumber}`;
+        showMsg('success', msg);
         loadTodayEntries();
     } catch (err) {
         showMsg('danger', err.message);
